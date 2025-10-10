@@ -24,8 +24,6 @@ public class JwtUtil {
 
     private static final long expirationTime = 1000 * 60 * 60;
 
-
-    //    create token with payload
     public String createToken(Map<String, Object> payload, String email) {
         return Jwts.builder()
                 .subject(email)
@@ -35,11 +33,11 @@ public class JwtUtil {
                 .compact();
     }
 
-    // create token with email
+    // create token with username
     public String createToken(String email) {
+        // calling the method with  payload
         return createToken(new HashMap<>(), email);
     }
-
 
     public Claims extractAllPayloads(String token) {
         return Jwts.parser()
@@ -78,10 +76,4 @@ public class JwtUtil {
         Claims claim = extractAllPayloads(token);
         return (Object) claim.get(payloadKey);
     }
-//   Map<String,Object> user= new HashMap()<>;
-//   user.put("email","abc@gmail,com");
-//   user.put("phnomuber","345345");
-//   String result = createToken(user,"manshu");
-//   system.out.println("email "+ extractPayload(result,"email").toString());
-
 }

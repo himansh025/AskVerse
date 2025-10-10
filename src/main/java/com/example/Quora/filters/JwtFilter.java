@@ -32,12 +32,12 @@ public class JwtFilter extends OncePerRequestFilter{
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 //        String authHeader= request.getHeader("Authorization");
         String path = request.getRequestURI();
-        if (path.startsWith("/auth/signup") || path.startsWith("/auth/signin")) {
+        if (path.startsWith("/user/signup") || path.startsWith("/user/signin")) {
             filterChain.doFilter(request, response);
             return; // skip JWT validation for signup/ signIn
         }
         String token = null;
-        String email=null;
+        String email= null;
         if(request.getCookies()!=null){
             for (Cookie cookie : request.getCookies()){
                 if(cookie.getName().equals("JwtToken")){
@@ -45,7 +45,7 @@ public class JwtFilter extends OncePerRequestFilter{
                 }
             }
         }
-        if (token ==null){
+        if (token == null){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         return;
         }

@@ -5,22 +5,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
 import java.util.Set;
 
+@Entity
 @Data
 @NoArgsConstructor
-@Builder
 public class Tag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  Long id;
+    private Long id;
 
-    private  String name;
+    private String name;
 
-    @ManyToMany(mappedBy = "tags")
-    private Set<Question> questions;
+    @ManyToMany(mappedBy = "tags", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    private Set<Question> questions = new HashSet<>();
 
-    @ManyToMany(mappedBy = "followedTags")
-    private  Set<User> followers;
-
+    @ManyToMany(mappedBy = "followedTags", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    private Set<User> followers = new HashSet<>();
 }
+
