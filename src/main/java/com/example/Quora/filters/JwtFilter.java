@@ -32,7 +32,7 @@ public class JwtFilter extends OncePerRequestFilter{
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 //        String authHeader= request.getHeader("Authorization");
         String path = request.getRequestURI();
-        if (path.startsWith("/user/signup") || path.startsWith("/user/signin")) {
+        if (path.startsWith("/user/signup") || path.startsWith("/user/signin")||path.startsWith("/api/health") ) {
             filterChain.doFilter(request, response);
             return; // skip JWT validation for signup/ signIn
         }
