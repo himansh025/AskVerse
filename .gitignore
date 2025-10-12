@@ -48,13 +48,6 @@ Thumbs.db
 # ==============================
 *.log
 
-# ==============================
-# Spring Boot config (keep secrets out of git)
-# ==============================
-application.properties
-application.yml
-application-*.yml
-application-*.properties
 
 # ==============================
 # Other build outputs

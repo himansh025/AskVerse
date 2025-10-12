@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    @Value("${spring.jwt}")
+    @Value("${spring.jwt.secret}")
     private String Secret;
 
     private SecretKey getSignInkey() {
