@@ -23,6 +23,7 @@ gradle/wrapper/gradle-wrapper.properties
 .sts4-cache
 bin/
 
+.env
 # IntelliJ IDEA
 .idea/
 *.iws
