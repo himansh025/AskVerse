@@ -15,8 +15,8 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    @Value("${spring.jwt.secret}")
-    private String Secret;
+//    @Value("${jwt.secret}")
+    private String Secret="fgvrewsff#@$354trVFGrfvffrbgvdgedfsfbgrfbfdhrdvf";
 
     private SecretKey getSignInkey() {
         return Keys.hmacShaKeyFor(Secret.getBytes(StandardCharsets.UTF_8));

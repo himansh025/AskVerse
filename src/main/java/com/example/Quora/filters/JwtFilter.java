@@ -32,10 +32,21 @@ public class JwtFilter extends OncePerRequestFilter{
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 //        String authHeader= request.getHeader("Authorization");
         String path = request.getRequestURI();
-        if (path.startsWith("/user/signup") || path.startsWith("/user/signin")||path.startsWith("/api/health") ) {
+        if (
+                path.startsWith("/user/signup") ||
+                        path.startsWith("/user/signin") ||
+                        path.startsWith("/api/health") ||
+                        path.startsWith("/v3/api-docs") ||
+                        path.startsWith("/swagger-ui") ||
+                        path.startsWith("/swagger-resources") ||
+                        path.startsWith("/webjars") ||
+                        path.equals("/") ||
+                        path.startsWith("/api/v1/questions")
+        ) {
             filterChain.doFilter(request, response);
-            return; // skip JWT validation for signup/ signIn
+            return; // ✅ Skip JWT validation for these public and Swagger endpoints
         }
+
         String token = null;
         String email= null;
         if(request.getCookies()!=null){
