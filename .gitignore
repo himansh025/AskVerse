@@ -4,11 +4,6 @@
 .gradle/
 build/
 
-# Keep Gradle wrapper files tracked
-gradlew
-gradlew.bat
-gradle/wrapper/gradle-wrapper.jar
-gradle/wrapper/gradle-wrapper.properties
 
 # ==============================
 # IDE files
