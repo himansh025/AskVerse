@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 public class UserSignupDto {
     private String email;
-    private String phoneNumber;
+    private String username;
     private String password;
     private String name;
 

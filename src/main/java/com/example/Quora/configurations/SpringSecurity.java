@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,15 +18,21 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableWebSecurity
 public class SpringSecurity {
+    private final JwtFilter jwtFilter;
+    private final UserDetailsServiceImp userDetailsServiceImp;
 
-    @Autowired
-    private JwtFilter jwtFilter;
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new UserDetailsServiceImp();
+    public SpringSecurity(JwtFilter jwtFilter, UserDetailsServiceImp userDetailsServiceImp) {
+        this.jwtFilter = jwtFilter;
+        this.userDetailsServiceImp = userDetailsServiceImp;
     }
+
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        return new UserDetailsServiceImp();
+//    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -41,9 +48,9 @@ public class SpringSecurity {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
-                        .requestMatchers("/api/v1/user/signup").permitAll()
-                        .requestMatchers("/api/v1/user/signin").permitAll()
-                        .requestMatchers("/api/v1/questions/").permitAll()
+                        .requestMatchers("/api/v1/users/signup").permitAll()
+                        .requestMatchers("/api/v1/users/signin").permitAll()
+                        .requestMatchers("/api/v1/questions").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -53,8 +60,10 @@ public class SpringSecurity {
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        System.out.println("fdc" + config);
         return config.getAuthenticationManager();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

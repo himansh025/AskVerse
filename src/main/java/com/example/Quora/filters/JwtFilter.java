@@ -4,7 +4,6 @@ import com.example.Quora.services.UserDetailsServiceImp;
 import com.example.Quora.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,8 +19,8 @@ import java.io.IOException;
 @Component
 public class JwtFilter extends OncePerRequestFilter{
 
-    private JwtUtil jwtUtil;
-    private UserDetailsServiceImp userDetailsServiceImp;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsServiceImp userDetailsServiceImp;
 
     public JwtFilter(JwtUtil jwtUtil, UserDetailsServiceImp userDetailsServiceImp) {
         this.jwtUtil=jwtUtil;
@@ -33,8 +32,8 @@ public class JwtFilter extends OncePerRequestFilter{
 //        String authHeader= request.getHeader("Authorization");
         String path = request.getRequestURI();
         if (
-                path.startsWith("/user/signup") ||
-                        path.startsWith("/user/signin") ||
+                path.startsWith("/api/v1/users/signup") ||
+                        path.startsWith("/api/v1/users/signin") ||
                         path.startsWith("/api/health") ||
                         path.startsWith("/v3/api-docs") ||
                         path.startsWith("/swagger-ui") ||
@@ -44,17 +43,16 @@ public class JwtFilter extends OncePerRequestFilter{
                         path.startsWith("/api/v1/questions")
         ) {
             filterChain.doFilter(request, response);
-            return; // ✅ Skip JWT validation for these public and Swagger endpoints
+            return;
         }
 
         String token = null;
         String email= null;
-        if(request.getCookies()!=null){
-            for (Cookie cookie : request.getCookies()){
-                if(cookie.getName().equals("JwtToken")){
-                    token=cookie.getValue();
-                }
-            }
+        String authHeader= request.getHeader("Authorization");
+        System.out.println(authHeader);
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+            System.out.println("username" + token);
         }
         if (token == null){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
