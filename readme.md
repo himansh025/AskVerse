@@ -1,6 +1,6 @@
 # AskVerse
 
-A robust Quora like platform built with Java Spring Boot where users can post questions, provide answers, comment on answers, and follow tags of interest.
+Build backend like Quora platform with Java Spring Boot where users can post questions, provide answers, comment on answers, and follow tags of interest.
 
 ## 🚀 Live Demo
 
