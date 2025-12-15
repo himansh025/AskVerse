@@ -55,15 +55,15 @@ export default function FeedPage() {
       } catch (err) {
         console.error('Error fetching feed:', err);
         // Fallback to all questions if feed fails
-        try {
-          const { data } = await axiosInstance.get(
-            `/api/v1/questions/all?page=0&size=10`
-          );
-          const questionsData = data.data || data;
-          setFeed(questionsData);
-        } catch (fallbackErr) {
-          console.error('Error fetching questions:', fallbackErr);
-        }
+        // try {
+        //   const { data } = await axiosInstance.get(
+        //     `/api/v1/questions/all?page=0&size=10`
+        //   );
+        //   const questionsData = data.data || data;
+        //   setFeed(questionsData);
+        // } catch (fallbackErr) {
+        //   console.error('Error fetching questions:', fallbackErr);
+        // }
       } finally {
         setIsLoading(false);
       }
