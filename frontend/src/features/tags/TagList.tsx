@@ -35,7 +35,7 @@ export default function TagsPage() {
             const qRes = await axiosInstance.get('/api/v1/questions?page=0&size=50');
             console.log(qRes);
             const allTags = qRes.data.flatMap((q: any) => q.tags);
-            const unique = [...new Set(allTags)];
+            // const unique = [...new Set(allTags)];
             // data = unique.map((name: string, idx: number) => ({
             //   id: idx + 1000, // fake ID
             //   name,
