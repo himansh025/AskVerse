@@ -1,8 +1,8 @@
 // src/features/answers/AddAnswerForm.tsx
 import { useState } from 'react';
 import { useCreateAnswerMutation } from './answersApi.ts';
-import { useAppSelector } from '../../hooks/hooks.ts';
 import Button from '../../components/Button.tsx';
+import { useSelector } from 'react-redux';
 
 interface AddAnswerFormProps {
   questionId: number;
@@ -11,7 +11,7 @@ interface AddAnswerFormProps {
 export default function AddAnswerForm({ questionId }: AddAnswerFormProps) {
   const [content, setContent] = useState('');
   const [createAnswer, { isLoading }] = useCreateAnswerMutation();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useSelector((state:any) => state.auth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

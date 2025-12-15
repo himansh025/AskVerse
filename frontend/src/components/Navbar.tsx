@@ -1,10 +1,10 @@
 // src/components/Navbar.tsx
 import { Link, useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../hooks/hooks.ts';
 import { logout } from '../features/auth/authSlice.ts';
+import { useDispatch } from 'react-redux';
 
 export default function Navbar() {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {

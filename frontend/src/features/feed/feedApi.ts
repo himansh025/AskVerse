@@ -2,7 +2,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { getToken } from '../../utils/token.ts';
 
-const BASE_URL = 'https://askverse-db8w.onrender.com';
+// const BASE_URL = 'https://askverse-db8w.onrender.com';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const feedApi = createApi({
   reducerPath: 'feedApi',

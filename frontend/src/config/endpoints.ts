@@ -1,5 +1,6 @@
 // src/api/endpoints.ts
-export const API_BASE = 'https://askverse-db8w.onrender.com';
+// export const API_BASE = 'https://askverse-db8w.onrender.com';
+export const API_BASE = import.meta.env.VITE_API_URL;
 
 export const ENDPOINTS = {
   SIGNUP: '/api/v1/users/signup',

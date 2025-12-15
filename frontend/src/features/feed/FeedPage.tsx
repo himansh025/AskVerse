@@ -1,8 +1,7 @@
 // src/pages/FeedPage.tsx
 import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '../../hooks/hooks.ts';
 import { login } from '../auth/authSlice.ts';
 import axiosInstance from '../../config/api.ts';
 import QuestionList from '../questions/QuestionList.tsx';
@@ -12,7 +11,7 @@ import Button from '../../components/Button.tsx';
 export default function FeedPage() {
   const [feed, setFeed] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, token } = useAppSelector((state) => state.auth);
+  const { user, token } = useSelector((state:any) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../config/api.ts';
-import { useAppSelector } from '../../hooks/hooks.ts';
 import Button from '../../components/Button.tsx';
 import Input from '../../components/Input.tsx';
 import Loader from '../../components/Loader.tsx';
+import { useSelector } from 'react-redux';
 
 export default function AskQuestionPage() {
   const [form, setForm] = useState({ title: '', content: '', tagIds: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useSelector((state:any) => state.auth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
