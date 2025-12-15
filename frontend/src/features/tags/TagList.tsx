@@ -1,10 +1,10 @@
 // src/pages/TagsPage.tsx
 import { useEffect, useState } from 'react';
-import { useAppSelector } from '../../hooks/hooks.ts';
 import axiosInstance from '../../config/api.ts';
 import Button from '../../components/Button.tsx';
 import Card from '../../components/Card.tsx';
 import Loader from '../../components/Loader.tsx';
+import { useSelector } from 'react-redux';
 
 interface Tag {
   id: number;
@@ -16,7 +16,7 @@ export default function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState<Record<number, boolean>>({});
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useSelector((state:any) => state.auth);
 
   // Fetch all tags
   useEffect(() => {

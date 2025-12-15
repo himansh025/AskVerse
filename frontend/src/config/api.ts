@@ -1,8 +1,8 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
 
-// const apiUrl:string = import.meta.env.VITE_API_URL;
+const apiUrl:string = import.meta.env.VITE_API_URL;
 
-const apiUrl:string = "http://localhost:8080"
+// const apiUrl:string = "http://localhost:8080"
 
 const axiosInstance:AxiosInstance = axios.create({
   baseURL: `${apiUrl}`,

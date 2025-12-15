@@ -1,5 +1,5 @@
 // src/App.tsx
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import {  Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar.tsx';
 import LoginPage from './features/auth/LoginPage.tsx';
 import SignupPage from './features/auth/SignupPage.tsx';
@@ -12,14 +12,13 @@ import NotFound from './pages/NotFound.tsx';
 import ProtectedRoute from './features/auth/ProtectedRoute.tsx';
 import { useEffect, useState } from 'react';
 import axiosInstance from './config/api.ts';
-import { useDispatch } from 'react-redux';
-import { useAppSelector } from './hooks/hooks.ts';
+import { useDispatch, useSelector } from 'react-redux';
 import { login } from './features/auth/authSlice.ts';
 import Loader from './components/Loader.tsx';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useSelector((state:any) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userToken = localStorage.getItem("token")
