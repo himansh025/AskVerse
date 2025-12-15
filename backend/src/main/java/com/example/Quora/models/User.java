@@ -27,8 +27,16 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
-    @JoinTable(name = "user_tags", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    @JsonIgnore
-    private Set<Tag> followedTags = new HashSet<>();
+@ManyToMany(fetch = FetchType.LAZY,
+    cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+@JoinTable(
+    name = "user_tags",
+    joinColumns = @JoinColumn(name = "user_id"),
+    inverseJoinColumns = @JoinColumn(name = "tag_id")
+)
+@JsonIgnore
+@ToString.Exclude
+@EqualsAndHashCode.Exclude
+private Set<Tag> followedTags = new HashSet<>();
+
 }
