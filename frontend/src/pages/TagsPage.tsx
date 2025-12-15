@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useAppSelector } from '../hooks/hooks.ts';
 import axiosInstance from '../config/api.ts';
 import Button from '../components/Button.tsx';
 import Card from '../components/Card.tsx';
 import Loader from '../components/Loader.tsx';
 import AddTagModal from '../features/tags/AddTagModal.tsx';
+import { useSelector } from 'react-redux';
 
 
 interface Tag {
@@ -19,7 +19,7 @@ export default function TagsPage() {
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState<Record<number, boolean>>({});
   const [isAddTagModalOpen, setIsAddTagModalOpen] = useState(false); // Add this state
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useSelector((state:any) => state.auth);
 
   // Fetch all tags
   const fetchTags = async () => {

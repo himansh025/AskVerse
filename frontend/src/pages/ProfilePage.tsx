@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useAppSelector } from '../hooks/hooks.ts';
-import axiosInstance from '../config/api.ts';
 import Card from '../components/Card.tsx';
 import Loader from '../components/Loader.tsx';
+import { useSelector } from 'react-redux';
 
 export default function ProfilePage() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useSelector((state:any) => state.auth);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
