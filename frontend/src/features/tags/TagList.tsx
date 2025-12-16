@@ -32,10 +32,10 @@ export default function TagsPage() {
         } catch (err: any) {
           if (err.response?.status === 404) {
             // Fallback: extract unique tags from questions
-            const qRes = await axiosInstance.get('/api/v1/questions?page=0&size=50');
-            console.log(qRes);
-            const allTags = qRes.data.flatMap((q: any) => q.tags);
-            const unique = [...new Set(allTags)];
+            // const qRes = await axiosInstance.get('/api/v1/questions?page=0&size=50');
+            // console.log(qRes);
+            // const allTags = qRes.data.flatMap((q: any) => q.tags);
+            // const unique = [...new Set(allTags)];
             // data = unique.map((name: string, idx: number) => ({
             //   id: idx + 1000, // fake ID
             //   name,

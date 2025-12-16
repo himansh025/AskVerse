@@ -27,7 +27,7 @@ export const questionsApi = createApi({
     getQuestionById: builder.query({
       query: (id) => `/api/v1/questions/${id}`,
       transformResponse: (response: any) => response.data || response,
-      providesTags: (result, error, id) => [{ type: 'Questions', id }],
+      providesTags: (id) => [{ type: 'Questions', id }],
     }),
     createQuestion: builder.mutation({
       query: (body) => ({

@@ -30,7 +30,6 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        // String authHeader= request.getHeader("Authorization");
         String path = request.getRequestURI();
         if (path.startsWith("/api/v1/users/signup") ||
                 path.startsWith("/api/v1/users/signin") ||
@@ -48,32 +47,50 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = null;
-        String email = null;
-        String authHeader = request.getHeader("Authorization");
-        System.out.println(authHeader);
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-            System.out.println("username" + token);
-        }
-        if (token == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        // System.out.println(authHeader);
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
             return;
         }
-        email = jwtUtil.extractEmail(token);
+
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+            // System.out.println("username" + token);
+        }
+
+        String token = authHeader.substring(7);
+        String email;
+
+        try {
+            email = jwtUtil.extractEmail(token);
+        } catch (Exception e) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (email != null && auth == null) {
-            UserDetails userDetails = userDetailsServiceImp.loadUserByUsername(email);
-            if (jwtUtil.validateToken(token, email)) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken
-                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-            }
+        
+            if (email != null && auth == null) {
+        UserDetails userDetails =
+                userDetailsServiceImp.loadUserByUsername(email);
 
+        if (jwtUtil.validateToken(token, email)) {
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext()
+                    .setAuthentication(authentication);
         }
-        filterChain.doFilter(request, response);
     }
+
+    filterChain.doFilter(request, response);
+}
 }
