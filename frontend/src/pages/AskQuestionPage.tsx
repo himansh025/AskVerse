@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../../config/api.ts';
-import Loader from '../../components/Loader.tsx';
+import axiosInstance from '../config/api.ts';
+import Loader from '../components/Loader.tsx';
 import { useSelector } from 'react-redux';
 import {
   HelpCircle,
@@ -119,9 +119,9 @@ export default function AskQuestionPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#07528f] to-[#8f0752] flex items-center justify-center">
-              <HelpCircle className="text-white" size={24} />
+          <h1 className="text-4xl font-bold  mb-2 flex items-center gap-3" style={{ color: '#07528f' }}>
+            <div className="w-12 h-12 rounded-full  flex items-center justify-center" style={{backgroundColor:"#8f0752"}}>
+              <HelpCircle className=""style={{ color: '#e5e8ebff' }} size={24} />
             </div>
             Ask a Question
           </h1>

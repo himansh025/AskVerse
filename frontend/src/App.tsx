@@ -1,24 +1,26 @@
 // src/App.tsx
-import {  Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar.tsx';
-import LoginPage from './features/auth/LoginPage.tsx';
-import SignupPage from './features/auth/SignupPage.tsx';
-import FeedPage from './features/feed/FeedPage.tsx';
-import AskQuestionPage from './features/questions/AskQuestionPage.tsx';
-import QuestionDetails from './features/questions/QuestionDetails.tsx';
+import LoginPage from './pages/LoginPage.tsx';
+import SignupPage from './pages/SignupPage.tsx';
+import FeedPage from './pages/FeedPage.tsx';
+import AskQuestionPage from './pages/AskQuestionPage.tsx';
+// import QuestionDetails from './pages/';
 import TagsPage from './pages/TagsPage.tsx';
 import ProfilePage from './pages/ProfilePage.tsx';
 import NotFound from './pages/NotFound.tsx';
-import ProtectedRoute from './features/auth/ProtectedRoute.tsx';
+// import ProtectedRoute from './pages';
 import { useEffect, useState } from 'react';
 import axiosInstance from './config/api.ts';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from './features/auth/authSlice.ts';
 import Loader from './components/Loader.tsx';
+import ProtectedRoute from './features/auth/ProtectedRoute.tsx';
+import QuestionDetails from './features/questions/QuestionDetails.tsx';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useSelector((state:any) => state.auth);
+  const { user } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userToken = localStorage.getItem("token")
