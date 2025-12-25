@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // import { useDispatch } from 'react-redux';
-import axiosInstance from '../../config/api.ts';
+import axiosInstance from '../config/api.ts';
 // import { login } from './authSlice.ts';
-import Button from '../../components/Button.tsx';
-import Input from '../../components/Input.tsx';
+import Button from '../components/Button.tsx';
+import Input from '../components/Input.tsx';
 
 export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', username: '', password: '' });
@@ -19,12 +19,12 @@ export default function SignupPage() {
     try {
       const { data } = await axiosInstance.post('/api/v1/users/signup', form);
       console.log('Signup data:', data);
-      
+
       // Assuming signup returns user data, dispatch login
       // dispatch(login({ user: data, token: null })); // Token from login
       navigate('/login');
     } catch (error: any) {
-      
+
       console.error('Signup error:', error);
     } finally {
       setLoading(false);

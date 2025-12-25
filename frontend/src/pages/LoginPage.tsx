@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 // import { toast } from 'react-toastify';
-import axiosInstance from "../../config/api.ts";
-import { login } from './authSlice.ts';
-import Button from '../../components/Button.tsx';
-import Input from '../../components/Input.tsx';
+import axiosInstance from "../config/api.ts";
+import { login } from '../features/auth/authSlice.ts';
+import Button from '../components/Button.tsx';
+import Input from '../components/Input.tsx';
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
