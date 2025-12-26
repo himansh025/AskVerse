@@ -17,9 +17,9 @@ public class UserFeedController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<List<QuestionResponseDto>>> getUserFeed(
-            @PathVariable Long userId,
-            @RequestParam int page,
-            @RequestParam int size) {
+            @PathVariable("userId") Long userId,
+            @RequestParam("page") int page,
+            @RequestParam("size") int size) {
         List<QuestionResponseDto> feed = userFeedService.getUserFeed(userId, page, size);
         return ResponseEntity.ok(ApiResponse.success("Feed retrieved successfully", feed));
     }
