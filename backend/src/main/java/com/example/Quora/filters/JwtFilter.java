@@ -30,7 +30,16 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        
+        // CRITICAL: Handle OPTIONS requests first (preflight)
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String path = request.getRequestURI();
+        
+        // Public endpoints that don't need JWT validation
         if (path.startsWith("/api/v1/users/signup") ||
                 path.startsWith("/api/v1/users/signin") ||
                 path.startsWith("/api/health") ||
@@ -38,28 +47,27 @@ public class JwtFilter extends OncePerRequestFilter {
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/swagger-resources") ||
                 path.startsWith("/webjars") ||
-                path.equals("/") ||
-                path.startsWith("/api/v1/questions") ||
-                path.startsWith("/api/v1/tags") ||
-                path.startsWith("/api/v1/answers") ||
-                path.startsWith("/api/v1/comments")) {
+                path.equals("/")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // System.out.println(authHeader);
-
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        // Allow GET requests to these endpoints without auth
+        if ("GET".equalsIgnoreCase(request.getMethod()) &&
+                (path.startsWith("/api/v1/questions") ||
+                 path.startsWith("/api/v1/tags") ||
+                 path.startsWith("/api/v1/answers") ||
+                 path.startsWith("/api/v1/comments"))) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        // Extract and validate JWT token
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
-            // System.out.println("username" + token);
         }
 
         String token = authHeader.substring(7);
@@ -68,29 +76,32 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             email = jwtUtil.extractEmail(token);
         } catch (Exception e) {
+            System.err.println("JWT extraction error: " + e.getMessage());
             filterChain.doFilter(request, response);
             return;
         }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         
-            if (email != null && auth == null) {
-        UserDetails userDetails =
-                userDetailsServiceImp.loadUserByUsername(email);
+        if (email != null && auth == null) {
+            try {
+                UserDetails userDetails = userDetailsServiceImp.loadUserByUsername(email);
 
-        if (jwtUtil.validateToken(token, email)) {
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
+                if (jwtUtil.validateToken(token, email)) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
 
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request));
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
 
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                System.err.println("Authentication error: " + e.getMessage());
+            }
         }
-    }
 
-    filterChain.doFilter(request, response);
-}
+        filterChain.doFilter(request, response);
+    }
 }
