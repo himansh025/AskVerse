@@ -91,7 +91,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<User>> getUserData(Authentication authentication) {
         String email = authentication.getName();
-        System.out.println("email"+email);
+        System.out.println("email" + email);
         Optional<User> user = userService.getUserByEmail(email);
         if (user.isPresent()) {
             return ResponseEntity.ok(ApiResponse.success("User data retrieved", user.get()));
@@ -106,8 +106,23 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/followTag/{tagId}")
-    public ResponseEntity<ApiResponse<Void>> followTag(@PathVariable Long userId, @PathVariable Long tagId) {
+    public ResponseEntity<ApiResponse<Void>> followTag(@PathVariable("userId") Long userId,
+            @PathVariable("tagId") Long tagId) {
         userService.followTag(userId, tagId);
         return ResponseEntity.ok(ApiResponse.success("Tag followed successfully", null));
+    }
+
+    @DeleteMapping("/{userId}/unfollowTag/{tagId}")
+    public ResponseEntity<ApiResponse<Void>> unfollowTag(@PathVariable("userId") Long userId,
+            @PathVariable("tagId") Long tagId) {
+        userService.unfollowTag(userId, tagId);
+        return ResponseEntity.ok(ApiResponse.success("Tag unfollowed successfully", null));
+    }
+
+    @GetMapping("/{userId}/followedTags")
+    public ResponseEntity<ApiResponse<java.util.Set<com.example.Quora.models.Tag>>> getFollowedTags(
+            @PathVariable("userId") Long userId) {
+        java.util.Set<com.example.Quora.models.Tag> followedTags = userService.getFollowedTags(userId);
+        return ResponseEntity.ok(ApiResponse.success("Followed tags retrieved successfully", followedTags));
     }
 }

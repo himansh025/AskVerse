@@ -1,1 +1,71 @@
-package com.example.Quora.services;import com.example.Quora.dtos.UserDto;import com.example.Quora.models.Tag;import com.example.Quora.models.User;import com.example.Quora.repository.TagRepository;import com.example.Quora.repository.UserRepository;import java.util.Optional;import org.springframework.beans.factory.annotation.Autowired;import org.springframework.security.crypto.password.PasswordEncoder;import org.springframework.stereotype.Service;import java.util.List;@Servicepublic class UserService {    @Autowired    private UserRepository userRepository;    @Autowired    private TagRepository tagRepository;    @Autowired    private   PasswordEncoder passwordEncoder;    public List<User> getAllUsers() {        return userRepository.findAll();    }    public Optional<User> getUserById(Long id) {        return userRepository.findById(id);    }    public Optional<User> getUserByEmail( String email) {        return userRepository.findUserByEmail(email);    }    public void followTag(Long userId, Long tagId) {        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));        Tag tag = tagRepository.findById(tagId).orElseThrow(() -> new RuntimeException("Tag not found"));        user.getFollowedTags().add(tag);        userRepository.save(user);    }    public User createUser(UserDto userDTO) {        String hashedPassword= passwordEncoder.encode(userDTO.getPassword());        User user = new User();        user.setUsername(userDTO.getUsername());        user.setEmail(userDTO.getEmail());        user.setName(userDTO.getName());        user.setPassword(hashedPassword);        return userRepository.save(user);    }    public void deleteUser(Long id) {        userRepository.deleteById(id);    }}
+package com.example.Quora.services;
+
+import com.example.Quora.dtos.UserDto;
+import com.example.Quora.models.Tag;
+import com.example.Quora.models.User;
+import com.example.Quora.repository.TagRepository;
+import com.example.Quora.repository.UserRepository;
+
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TagRepository tagRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public Optional<User> getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findUserByEmail(email);
+    }
+
+    public void followTag(Long userId, Long tagId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Tag tag = tagRepository.findById(tagId).orElseThrow(() -> new RuntimeException("Tag not found"));
+        user.getFollowedTags().add(tag);
+        userRepository.save(user);
+    }
+
+    public void unfollowTag(Long userId, Long tagId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Tag tag = tagRepository.findById(tagId).orElseThrow(() -> new RuntimeException("Tag not found"));
+        user.getFollowedTags().remove(tag);
+        userRepository.save(user);
+    }
+
+    public java.util.Set<Tag> getFollowedTags(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getFollowedTags();
+    }
+
+    public User createUser(UserDto userDTO) {
+        String hashedPassword = passwordEncoder.encode(userDTO.getPassword());
+        User user = new User();
+        user.setUsername(userDTO.getUsername());
+        user.setEmail(userDTO.getEmail());
+        user.setName(userDTO.getName());
+        user.setPassword(hashedPassword);
+        return userRepository.save(user);
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+}

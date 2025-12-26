@@ -43,6 +43,23 @@ public class QuestionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public QuestionResponseDto getQuestionById(Long id) {
+        Question question = questionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found with id: " + id));
+        return mapToDto(question);
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuestionResponseDto> getQuestionsByTag(Long tagId, int page, int size) {
+        return questionRepository
+                .findQuestionsByTagId(tagId, PageRequest.of(page, size))
+                .getContent()
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
     @Transactional
     public QuestionResponseDto createQuestion(QuestionDto dto) {
 
