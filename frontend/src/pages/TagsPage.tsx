@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Check } from 'lucide-react';
 import axiosInstance from '../config/api.ts';
 import Button from '../components/Button.tsx';
@@ -159,7 +160,9 @@ export default function TagsPage() {
           {filteredTags.map(tag => (
             <div key={tag.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col justify-between mb-4 break-inside-avoid">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">#{tag.name}</h3>
+                <Link to={`/tags/${tag.id}`} className="group">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors cursor-pointer">#{tag.name}</h3>
+                </Link>
                 {(tag.followerCount && tag.followerCount > 100) || (tag.questionCount && tag.questionCount > 50) ? (
                   <span className="bg-gradient-to-r from-pink-500 to-yellow-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">Trending</span>
                 ) : null}
@@ -167,9 +170,9 @@ export default function TagsPage() {
               {tag.description && (
                 <p className="text-sm text-gray-600 mb-2 line-clamp-3">{tag.description}</p>
               )}
-              <div className="text-sm text-gray-500 mb-2">
+              <Link to={`/tags/${tag.id}`} className="text-sm text-gray-500 mb-2 hover:text-purple-600 transition-colors">
                 {tag.questionCount ?? 0} question{tag.questionCount !== 1 ? 's' : ''} • {tag.followerCount ?? 0} follower{tag.followerCount !== 1 ? 's' : ''}
-              </div>
+              </Link>
               <Button
                 onClick={() => followedTagIds.has(tag.id) ? handleUnfollow(tag.id) : handleFollow(tag.id)}
                 disabled={following[tag.id]}

@@ -5,18 +5,17 @@ import LoginPage from './pages/LoginPage.tsx';
 import SignupPage from './pages/SignupPage.tsx';
 import FeedPage from './pages/FeedPage.tsx';
 import AskQuestionPage from './pages/AskQuestionPage.tsx';
-// import QuestionDetails from './pages/';
 import TagsPage from './pages/TagsPage.tsx';
+import TagDetailsPage from './pages/TagDetailsPage.tsx';
 import ProfilePage from './pages/ProfilePage.tsx';
 import NotFound from './pages/NotFound.tsx';
-// import ProtectedRoute from './pages';
+import QuestionDetailsPage from './pages/QuestionDetailsPage.tsx';
 import { useEffect, useState } from 'react';
 import axiosInstance from './config/api.ts';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from './features/auth/authSlice.ts';
 import Loader from './components/Loader.tsx';
 import ProtectedRoute from './features/auth/ProtectedRoute.tsx';
-import QuestionDetails from './features/questions/QuestionDetails.tsx';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -65,8 +64,9 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<FeedPage />} />
             <Route path="/ask" element={<AskQuestionPage />} />
-            <Route path="/question/:id" element={<QuestionDetails />} />
+            <Route path="/question/:id" element={<QuestionDetailsPage />} />
             <Route path="/tags" element={<TagsPage />} />
+            <Route path="/tags/:id" element={<TagDetailsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
