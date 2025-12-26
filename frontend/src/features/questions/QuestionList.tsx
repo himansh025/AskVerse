@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { MessageSquare, ThumbsUp, Eye, Clock, Bookmark } from 'lucide-react';
+import { Clock} from 'lucide-react';
+// import { MessageSquare, ThumbsUp, Eye, Clock, Bookmark } from 'lucide-react';
 import Card from '../../components/Card';
 
 interface QuestionListProps {
