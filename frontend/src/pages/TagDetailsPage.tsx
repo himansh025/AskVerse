@@ -31,19 +31,19 @@ export default function TagDetailsPage() {
     const [tag, setTag] = useState<TagDetails | null>(null);
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
+    // const [currentPage, setCurrentPage] = useState(0);
+    // const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
         if (id) {
             fetchTagDetailsWithQuestions();
         }
-    }, [id, currentPage]);
+    }, [id]);
 
     const fetchTagDetailsWithQuestions = async () => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get(`/api/v1/tags/${id}/details?page=${currentPage}&size=10`);
+            const response = await axiosInstance.get(`/api/v1/tags/${id}/details?page=0&size=10`);
             const data = response.data.data || response.data;
 
             setTag({
@@ -53,7 +53,7 @@ export default function TagDetailsPage() {
                 questionCount: data.questionCount
             });
             setQuestions(data.questions || []);
-            setTotalPages(data.totalPages || 0);
+            // setTotalPages(data.totalPages || 0);
         } catch (error) {
             console.error('Error fetching tag details:', error);
             navigate('/tags');
