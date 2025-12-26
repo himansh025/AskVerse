@@ -22,9 +22,8 @@ public class TagService {
                 .map(tag -> new TagResponseDto(
                         tag.getId(),
                         tag.getName(),
-                        0, // follower count - can be calculated separately if needed
-                        0 // question count - can be calculated separately if needed
-                ))
+                        tag.getFollowers() != null ? tag.getFollowers().size() : 0,
+                        tag.getQuestions() != null ? tag.getQuestions().size() : 0))
                 .collect(Collectors.toList());
     }
 
