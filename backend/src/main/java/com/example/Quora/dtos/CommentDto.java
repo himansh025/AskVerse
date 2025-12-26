@@ -8,4 +8,5 @@ public class CommentDto {
     private String content;
     private Long answerId;
     private Long parentCommentId;
+    private Long userId;
 }

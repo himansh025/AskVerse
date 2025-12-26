@@ -124,7 +124,7 @@ export default function QuestionList({ questions }: QuestionListProps) {
               </p>
 
               {/* Footer Stats */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm text-gray-500">
+              {/* <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm text-gray-500">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5 hover:text-[#07528f] transition-colors" title="Votes">
                     <ThumbsUp size={16} />
@@ -143,7 +143,7 @@ export default function QuestionList({ questions }: QuestionListProps) {
                 <button className="text-gray-400 hover:text-[#8f0752] transition-colors">
                   <Bookmark size={18} />
                 </button>
-              </div>
+              </div> */}
             </div>
           </Card>
         );

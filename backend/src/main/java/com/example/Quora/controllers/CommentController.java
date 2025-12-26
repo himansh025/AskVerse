@@ -2,6 +2,7 @@ package com.example.Quora.controllers;
 
 import com.example.Quora.dtos.ApiResponse;
 import com.example.Quora.dtos.CommentDto;
+import com.example.Quora.dtos.CommentResponseDto;
 import com.example.Quora.exceptions.ResourceNotFoundException;
 import com.example.Quora.models.Comment;
 import com.example.Quora.services.CommentService;
@@ -21,25 +22,25 @@ public class CommentController {
     private CommentService commentService;
 
     @GetMapping("/answer/{answerId}")
-    public ResponseEntity<ApiResponse<List<Comment>>> getCommentsByAnswerId(
-            @PathVariable Long answerId,
-            @RequestParam int page,
-            @RequestParam int size) {
-        List<Comment> comments = commentService.getCommentsByAnswerId(answerId, page, size);
+    public ResponseEntity<ApiResponse<List<CommentResponseDto>>> getCommentsByAnswerId(
+            @PathVariable("answerId") Long answerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        List<CommentResponseDto> comments = commentService.getCommentsByAnswerId(answerId, page, size);
         return ResponseEntity.ok(ApiResponse.success("Comments retrieved successfully", comments));
     }
 
     @GetMapping("/comment/{commentId}")
-    public ResponseEntity<ApiResponse<List<Comment>>> getRepliesByCommentId(
-            @PathVariable Long commentId,
-            @RequestParam int page,
-            @RequestParam int size) {
-        List<Comment> replies = commentService.getRepliesByCommentId(commentId, page, size);
+    public ResponseEntity<ApiResponse<List<CommentResponseDto>>> getRepliesByCommentId(
+            @PathVariable("commentId") Long commentId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        List<CommentResponseDto> replies = commentService.getRepliesByCommentId(commentId, page, size);
         return ResponseEntity.ok(ApiResponse.success("Replies retrieved successfully", replies));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Comment>> getCommentById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Comment>> getCommentById(@PathVariable("id") Long id) {
         Optional<Comment> comment = commentService.getCommentById(id);
         if (comment.isPresent()) {
             return ResponseEntity.ok(ApiResponse.success("Comment found", comment.get()));
@@ -48,14 +49,14 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Comment>> createComment(@RequestBody CommentDto commentDTO) {
-        Comment createdComment = commentService.createComment(commentDTO);
+    public ResponseEntity<ApiResponse<CommentResponseDto>> createComment(@RequestBody CommentDto commentDTO) {
+        CommentResponseDto createdComment = commentService.createComment(commentDTO);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Comment created successfully", createdComment));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable("id") Long id) {
         commentService.deleteComment(id);
         return ResponseEntity.ok(ApiResponse.success("Comment deleted successfully", null));
     }

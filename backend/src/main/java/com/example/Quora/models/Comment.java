@@ -29,6 +29,13 @@ public class Comment {
     @JsonIgnore
     private Comment parentComment;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User user;
+
     @OneToMany(mappedBy = "parentComment")
     @JsonIgnore
     private Set<Comment> replies = new HashSet<>();

@@ -28,9 +28,29 @@ public class QuestionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Questions retrieved successfully",
-                        questionService.getQuestions(page, size)
-                )
-        );
+                        questionService.getQuestions(page, size)));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<QuestionResponseDto>> getQuestionById(
+            @PathVariable("id") Long id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Question retrieved successfully",
+                        questionService.getQuestionById(id)));
+    }
+
+    @GetMapping("/tag/{tagId}")
+    public ResponseEntity<ApiResponse<List<QuestionResponseDto>>> getQuestionsByTag(
+            @PathVariable("tagId") Long tagId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Questions retrieved successfully",
+                        questionService.getQuestionsByTag(tagId, page, size)));
     }
 
     @PostMapping
@@ -40,8 +60,7 @@ public class QuestionController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         "Question created successfully",
-                        questionService.createQuestion(dto)
-                ));
+                        questionService.createQuestion(dto)));
     }
 
     @DeleteMapping("/{id}")

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Check } from 'lucide-react';
 import axiosInstance from '../config/api.ts';
 import Button from '../components/Button.tsx';
@@ -38,8 +39,22 @@ export default function TagsPage() {
     }
   };
 
+  // Fetch user's followed tags
+  const fetchFollowedTags = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await axiosInstance.get(`/api/v1/users/${user.id}/followedTags`);
+      const followedTags: Tag[] = res.data.data || res.data;
+      const followedIds = new Set(followedTags.map(tag => tag.id));
+      setFollowedTagIds(followedIds);
+    } catch (error) {
+      console.error('Failed to load followed tags:', error);
+    }
+  };
+
   useEffect(() => {
     fetchTags();
+    fetchFollowedTags();
   }, []);
 
   // Follow a tag
@@ -49,9 +64,32 @@ export default function TagsPage() {
     try {
       await axiosInstance.post(`/api/v1/users/${user.id}/followTag/${tagId}`);
       setFollowedTagIds(prev => new Set(prev).add(tagId));
+      // Refresh tags to update follower count
+      fetchTags();
     } catch (err) {
       console.error('Failed to follow tag:', err);
       alert('Could not follow tag. Please try again.');
+    } finally {
+      setFollowing(prev => ({ ...prev, [tagId]: false }));
+    }
+  };
+
+  // Unfollow a tag
+  const handleUnfollow = async (tagId: number) => {
+    if (!user?.id) return;
+    setFollowing(prev => ({ ...prev, [tagId]: true }));
+    try {
+      await axiosInstance.delete(`/api/v1/users/${user.id}/unfollowTag/${tagId}`);
+      setFollowedTagIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tagId);
+        return newSet;
+      });
+      // Refresh tags to update follower count
+      fetchTags();
+    } catch (err) {
+      console.error('Failed to unfollow tag:', err);
+      alert('Could not unfollow tag. Please try again.');
     } finally {
       setFollowing(prev => ({ ...prev, [tagId]: false }));
     }
@@ -122,7 +160,9 @@ export default function TagsPage() {
           {filteredTags.map(tag => (
             <div key={tag.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col justify-between mb-4 break-inside-avoid">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">#{tag.name}</h3>
+                <Link to={`/tags/${tag.id}`} className="group">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors cursor-pointer">#{tag.name}</h3>
+                </Link>
                 {(tag.followerCount && tag.followerCount > 100) || (tag.questionCount && tag.questionCount > 50) ? (
                   <span className="bg-gradient-to-r from-pink-500 to-yellow-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">Trending</span>
                 ) : null}
@@ -130,23 +170,24 @@ export default function TagsPage() {
               {tag.description && (
                 <p className="text-sm text-gray-600 mb-2 line-clamp-3">{tag.description}</p>
               )}
-              <div className="text-sm text-gray-500 mb-2">
+              <Link to={`/tags/${tag.id}`} className="text-sm text-gray-500 mb-2 hover:text-purple-600 transition-colors">
                 {tag.questionCount ?? 0} question{tag.questionCount !== 1 ? 's' : ''} • {tag.followerCount ?? 0} follower{tag.followerCount !== 1 ? 's' : ''}
-              </div>
+              </Link>
               <Button
-                onClick={() => handleFollow(tag.id)}
-                disabled={following[tag.id] || followedTagIds.has(tag.id)}
+                onClick={() => followedTagIds.has(tag.id) ? handleUnfollow(tag.id) : handleFollow(tag.id)}
+                disabled={following[tag.id]}
                 size="small"
-                className={`w-full ${following[tag.id] || followedTagIds.has(tag.id) ? 'opacity-70 cursor-not-allowed' : ''} text-white flex items-center justify-center`} style={{ backgroundColor: '#8f0752' }}
+                className={`w-full ${following[tag.id] ? 'opacity-70 cursor-not-allowed' : ''} text-white flex items-center justify-center`}
+                style={{ backgroundColor: followedTagIds.has(tag.id) ? '#6b7280' : '#8f0752' }}
               >
                 {following[tag.id] ? (
                   <span className="flex items-center gap-2">
                     <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    Following...
+                    {followedTagIds.has(tag.id) ? 'Unfollowing...' : 'Following...'}
                   </span>
                 ) : followedTagIds.has(tag.id) ? (
                   <span className="flex items-center gap-2">
-                    <Check size={14} /> Following
+                    <Check size={14} /> Unfollow
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">

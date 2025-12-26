@@ -1,6 +1,7 @@
 package com.example.Quora.controllers;
 
 import com.example.Quora.dtos.ApiResponse;
+import com.example.Quora.dtos.TagDetailsResponseDto;
 import com.example.Quora.dtos.TagDto;
 import com.example.Quora.dtos.TagResponseDto;
 import com.example.Quora.exceptions.ResourceNotFoundException;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/tags")
@@ -28,10 +28,22 @@ public class TagController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Tag>> getTagById(@PathVariable Long id) {
-        Optional<Tag> tag = tagService.getTagById(id);
-        if (tag.isPresent()) {
-            return ResponseEntity.ok(ApiResponse.success("Tag found", tag.get()));
+    public ResponseEntity<ApiResponse<TagResponseDto>> getTagById(@PathVariable("id") Long id) {
+        TagResponseDto tag = tagService.getTagWithDetails(id);
+        if (tag != null) {
+            return ResponseEntity.ok(ApiResponse.success("Tag found", tag));
+        }
+        throw new ResourceNotFoundException("Tag not found with id: " + id);
+    }
+
+    @GetMapping("/{id}/details")
+    public ResponseEntity<ApiResponse<TagDetailsResponseDto>> getTagWithQuestions(
+            @PathVariable("id") Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        TagDetailsResponseDto tagDetails = tagService.getTagDetailsWithQuestions(id, page, size);
+        if (tagDetails != null) {
+            return ResponseEntity.ok(ApiResponse.success("Tag details retrieved successfully", tagDetails));
         }
         throw new ResourceNotFoundException("Tag not found with id: " + id);
     }

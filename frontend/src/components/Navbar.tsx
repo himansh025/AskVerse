@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../features/auth/authSlice.ts';
 import { useDispatch, useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
-import { Menu, X, LogOut, User as UserIcon, Search } from 'lucide-react';
+import { Menu, X, LogOut, User as  Search } from 'lucide-react';
 
 export default function Navbar() {
   const { user } = useSelector((state: any) => state.auth);
