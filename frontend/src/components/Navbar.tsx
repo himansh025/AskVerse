@@ -27,6 +27,7 @@ export default function Navbar() {
   }, [location.pathname]);
 
   const handleLogout = () => {
+    localStorage.removeItem("token")
     dispatch(logout());
     navigate('/login');
   };
@@ -52,9 +53,9 @@ export default function Navbar() {
           {/* Desktop Menu */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')}`}>Home</Link>
               {user && (
                 <>
+                  <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')}`}>Home</Link>
                   <Link to="/ask" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/ask')}`}>Ask</Link>
                   <Link to="/tags" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/tags')}`}>Tags</Link>
                 </>
@@ -63,20 +64,18 @@ export default function Navbar() {
           </div>
 
           {/* Search Bar (Desktop) */}
-          {user && (
-            <div className="hidden md:block flex-1 max-w-md mx-8">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={16} className="text-blue-300" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full pl-10 pr-3 py-1.5 border border-transparent rounded-full leading-5 bg-[#064070] text-blue-100 placeholder-blue-300 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 sm:text-sm transition-colors duration-200"
-                  placeholder="Search questions..."
-                />
+          <div className="hidden md:block flex-1 max-w-md mx-8">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-blue-300" />
               </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-1.5 border border-transparent rounded-full leading-5 bg-[#064070] text-blue-100 placeholder-blue-300 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 sm:text-sm transition-colors duration-200"
+                placeholder="Search questions..."
+              />
             </div>
-          )}
+          </div>
 
           {/* User Profile / Auth (Desktop) */}
           <div className="hidden md:block">
@@ -104,11 +103,7 @@ export default function Navbar() {
                     <LogOut size={20} />
                   </button>
                 </>
-              ) : (
-                <Link to="/login" className="text-white bg-white/20 hover:bg-white/30 px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                  Login
-                </Link>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -137,26 +132,27 @@ export default function Navbar() {
           }`}
       >
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-white/10">
-          <Link to="/" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/')}`}>Home</Link>
           {user && (
             <>
+              <Link to="/" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/')}`}>Home</Link>
               <Link to="/ask" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/ask')}`}>Ask</Link>
               <Link to="/tags" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/tags')}`}>Tags</Link>
             </>
           )}
-          <div className="my-4 px-3">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-blue-300" />
+          {user && (
+            <div className="my-4 px-3">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={16} className="text-blue-300" />
+                </div>
+                <input
+                  type="text"
+                  className="block w-full pl-10 pr-3 py-2 border border-transparent rounded-md leading-5 bg-[#064070] text-blue-100 placeholder-blue-300 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 sm:text-sm"
+                  placeholder="Search..."
+                />
               </div>
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-transparent rounded-md leading-5 bg-[#064070] text-blue-100 placeholder-blue-300 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 sm:text-sm"
-                placeholder="Search..."
-              />
             </div>
-          </div>
-
+          )}
           {user ? (
             <div className="pt-4 pb-3 border-t border-white/10">
               <div className="flex items-center px-5 mb-3">
@@ -182,13 +178,7 @@ export default function Navbar() {
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="pt-4 pb-3 border-t border-white/10 px-2">
-              <Link to="/login" className="block w-full text-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-[#07528f] bg-white hover:bg-gray-50">
-                Sign in
-              </Link>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>
