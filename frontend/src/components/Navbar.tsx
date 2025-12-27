@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../features/auth/authSlice.ts';
 import { useDispatch, useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
-import { Menu, X, LogOut, User as  Search } from 'lucide-react';
+import { Menu, X, LogOut, User as Search } from 'lucide-react';
 
 export default function Navbar() {
   const { user } = useSelector((state: any) => state.auth);
@@ -53,24 +53,30 @@ export default function Navbar() {
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')}`}>Home</Link>
-              <Link to="/ask" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/ask')}`}>Ask</Link>
-              <Link to="/tags" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/tags')}`}>Tags</Link>
+              {user && (
+                <>
+                  <Link to="/ask" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/ask')}`}>Ask</Link>
+                  <Link to="/tags" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/tags')}`}>Tags</Link>
+                </>
+              )}
             </div>
           </div>
 
           {/* Search Bar (Desktop) */}
-          <div className="hidden md:block flex-1 max-w-md mx-8">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-blue-300" />
+          {user && (
+            <div className="hidden md:block flex-1 max-w-md mx-8">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={16} className="text-blue-300" />
+                </div>
+                <input
+                  type="text"
+                  className="block w-full pl-10 pr-3 py-1.5 border border-transparent rounded-full leading-5 bg-[#064070] text-blue-100 placeholder-blue-300 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 sm:text-sm transition-colors duration-200"
+                  placeholder="Search questions..."
+                />
               </div>
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-1.5 border border-transparent rounded-full leading-5 bg-[#064070] text-blue-100 placeholder-blue-300 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-500 sm:text-sm transition-colors duration-200"
-                placeholder="Search questions..."
-              />
             </div>
-          </div>
+          )}
 
           {/* User Profile / Auth (Desktop) */}
           <div className="hidden md:block">
@@ -132,9 +138,12 @@ export default function Navbar() {
       >
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-white/10">
           <Link to="/" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/')}`}>Home</Link>
-          <Link to="/ask" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/ask')}`}>Ask</Link>
-          <Link to="/tags" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/tags')}`}>Tags</Link>
-
+          {user && (
+            <>
+              <Link to="/ask" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/ask')}`}>Ask</Link>
+              <Link to="/tags" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/tags')}`}>Tags</Link>
+            </>
+          )}
           <div className="my-4 px-3">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
