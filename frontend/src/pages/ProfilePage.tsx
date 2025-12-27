@@ -12,6 +12,7 @@ import {
   Settings
 } from 'lucide-react';
 import Loader from '../components/Loader.tsx';
+import axiosInstance from '../config/api.ts';
 
 export default function ProfilePage() {
   const { user } = useSelector((state: any) => state.auth);
@@ -19,11 +20,26 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('about');
 
+  const getUserProfile = async () => {
+
+    try {
+      const userId = user?.id;
+
+      const response = await axiosInstance.get(`/api/v1/users/profile/${userId}`);
+      setProfile(response.data.data); // Access the nested data property
+      // console.log("response", response.data)
+      setLoading(false);
+    } catch (error) {
+      // console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     setLoading(true);
     if (user?.id) {
-      setProfile(user);
-      setLoading(false);
+      getUserProfile();
     }
   }, [user]);
 
@@ -113,8 +129,8 @@ export default function ProfilePage() {
                     key={tab}
                     onClick={() => setActiveTab(tab.toLowerCase())}
                     className={`flex-1 py-4 text-sm font-medium text-center transition-colors relative ${activeTab === tab.toLowerCase()
-                        ? 'text-[#07528f]'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      ? 'text-[#07528f]'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                       }`}
                   >
                     {tab}
