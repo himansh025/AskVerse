@@ -15,15 +15,12 @@ export default function AddCommentForm({ answerId }: AddCommentFormProps) {
     setLoading(true);
 
     try {
-      const { data } = await axiosInstance.post('/api/v1/comments', {
-        content,
-        answerId
-      });
-      console.log('Comment created:', data);
+      await axiosInstance.post('/api/v1/comments', { content, answerId });
+      alert('Comment created');
       setContent('');
       window.location.reload();
     } catch (error: any) {
-      console.error('Error posting comment:', error);
+      alert(`Comment failed ${error}`);
     } finally {
       setLoading(false);
     }

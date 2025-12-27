@@ -61,7 +61,8 @@ public class AnswerService {
         UserBasicDto userDto = null;
         if (answer.getUser() != null) {
             User user = answer.getUser();
-            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail());
+            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
+                    user.getProfilePicture());
         }
 
         return new AnswerResponseDto(

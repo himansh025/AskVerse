@@ -1,12 +1,20 @@
 package com.example.Quora.services;
 
 import com.example.Quora.dtos.UserDto;
+import com.example.Quora.dtos.UserResponseDto;
+import com.example.Quora.dtos.UserProfileDto;
+import com.example.Quora.dtos.QuestionResponseDto;
 import com.example.Quora.models.Tag;
 import com.example.Quora.models.User;
 import com.example.Quora.repository.TagRepository;
 import com.example.Quora.repository.UserRepository;
+import com.example.Quora.repository.QuestionRepository;
+import com.example.Quora.repository.AnswerRepository;
+import com.example.Quora.repository.CommentRepository;
+import com.example.Quora.services.QuestionService;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +28,18 @@ public class UserService {
 
     @Autowired
     private TagRepository tagRepository;
+
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private AnswerRepository answerRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private QuestionService questionService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -62,10 +82,112 @@ public class UserService {
         user.setEmail(userDTO.getEmail());
         user.setName(userDTO.getName());
         user.setPassword(hashedPassword);
+        user.setProfilePicture(null);
+        user.setCoverPicture(null);
+        user.setBio(null);
+        user.setLocation(null);
+        user.setWebsite(null);
+        user.setGender(null);
+        user.setDob(null);
+
         return userRepository.save(user);
     }
 
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    // Mapper methods to convert User to DTOs
+    public UserResponseDto mapToUserResponseDto(User user) {
+        if (user == null) {
+            return null;
+        }
+        return UserResponseDto.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .profilePicture(user.getProfilePicture())
+                .coverPicture(user.getCoverPicture())
+                .bio(user.getBio())
+                .location(user.getLocation())
+                .website(user.getWebsite())
+                .gender(user.getGender())
+                .dob(user.getDob())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+
+    public UserProfileDto getUserProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Get user's questions
+        List<QuestionResponseDto> questions = questionRepository.findAll()
+                .stream()
+                .filter(q -> q.getUser() != null && q.getUser().getId().equals(userId))
+                .map(questionService::mapToDto)
+                .collect(Collectors.toList());
+
+        // Get followed tags
+        List<Tag> followedTags = user.getFollowedTags()
+                .stream()
+                .collect(Collectors.toList());
+
+        return UserProfileDto.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .profilePicture(user.getProfilePicture())
+                .coverPicture(user.getCoverPicture())
+                .bio(user.getBio())
+                .location(user.getLocation())
+                .website(user.getWebsite())
+                .gender(user.getGender())
+                .dob(user.getDob())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .questions(null) // Will use DTOs instead
+                .questionsCount((long) questions.size())
+                .answers(null) // Will use DTOs instead
+                .answersCount(answerRepository.findAll()
+                        .stream()
+                        .filter(a -> a.getUser() != null && a.getUser().getId().equals(userId))
+                        .count())
+                .comments(null) // Will use DTOs instead
+                .commentsCount(commentRepository.findAll()
+                        .stream()
+                        .filter(c -> c.getUser() != null && c.getUser().getId().equals(userId))
+                        .count())
+                .followedTags(followedTags)
+                .createdTags(null) // TODO: implement if needed
+                .build();
+    }
+
+    public User updateUserProfile(Long userId, UserProfileDto profileDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Update only non-null fields
+        if (profileDto.getName() != null)
+            user.setName(profileDto.getName());
+        if (profileDto.getBio() != null)
+            user.setBio(profileDto.getBio());
+        if (profileDto.getLocation() != null)
+            user.setLocation(profileDto.getLocation());
+        if (profileDto.getWebsite() != null)
+            user.setWebsite(profileDto.getWebsite());
+        if (profileDto.getGender() != null)
+            user.setGender(profileDto.getGender());
+        if (profileDto.getDob() != null)
+            user.setDob(profileDto.getDob());
+        if (profileDto.getProfilePicture() != null)
+            user.setProfilePicture(profileDto.getProfilePicture());
+        if (profileDto.getCoverPicture() != null)
+            user.setCoverPicture(profileDto.getCoverPicture());
+
+        return userRepository.save(user);
     }
 }

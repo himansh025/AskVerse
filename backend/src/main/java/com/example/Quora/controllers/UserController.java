@@ -2,6 +2,8 @@ package com.example.Quora.controllers;
 
 import com.example.Quora.dtos.ApiResponse;
 import com.example.Quora.dtos.UserDto;
+import com.example.Quora.dtos.UserResponseDto;
+import com.example.Quora.dtos.UserProfileDto;
 import com.example.Quora.exceptions.ResourceNotFoundException;
 import com.example.Quora.models.User;
 import com.example.Quora.services.UserService;
@@ -19,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.List;
 
 @RestController
@@ -38,25 +39,31 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAllUsers() {
+        List<UserResponseDto> users = userService.getAllUsers()
+                .stream()
+                .map(userService::mapToUserResponseDto)
+                .toList();
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", users));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id) {
-        Optional<User> user = userService.getUserById(id);
-        if (user.isPresent()) {
-            return ResponseEntity.ok(ApiResponse.success("User found", user.get()));
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable("id") Long id) {
+        UserResponseDto user = userService.getUserById(id)
+                .map(userService::mapToUserResponseDto)
+                .orElse(null);
+        if (user != null) {
+            return ResponseEntity.ok(ApiResponse.success("User found", user));
         }
         throw new ResourceNotFoundException("User not found with id: " + id);
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<User>> createUser(@RequestBody UserDto userDTO) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserDto userDTO) {
         User createdUser = userService.createUser(userDTO);
+        UserResponseDto userResponse = userService.mapToUserResponseDto(createdUser);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("User registered successfully", createdUser));
+                .body(ApiResponse.success("User registered successfully", userResponse));
     }
 
     @PostMapping("/signin")
@@ -89,18 +96,20 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<User>> getUserData(Authentication authentication) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserData(Authentication authentication) {
         String email = authentication.getName();
         System.out.println("email" + email);
-        Optional<User> user = userService.getUserByEmail(email);
-        if (user.isPresent()) {
-            return ResponseEntity.ok(ApiResponse.success("User data retrieved", user.get()));
+        UserResponseDto user = userService.getUserByEmail(email)
+                .map(userService::mapToUserResponseDto)
+                .orElse(null);
+        if (user != null) {
+            return ResponseEntity.ok(ApiResponse.success("User data retrieved", user));
         }
         throw new ResourceNotFoundException("User not found");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable("id") Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
     }
@@ -124,5 +133,20 @@ public class UserController {
             @PathVariable("userId") Long userId) {
         java.util.Set<com.example.Quora.models.Tag> followedTags = userService.getFollowedTags(userId);
         return ResponseEntity.ok(ApiResponse.success("Followed tags retrieved successfully", followedTags));
+    }
+
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<ApiResponse<UserProfileDto>> getProfile(@PathVariable("userId") Long userId) {
+        UserProfileDto profile = userService.getUserProfile(userId);
+        return ResponseEntity.ok(ApiResponse.success("User profile retrieved successfully", profile));
+    }
+
+    @PutMapping("/profile/{userId}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> updateProfile(
+            @PathVariable("userId") Long userId,
+            @RequestBody UserProfileDto profileDto) {
+        User updatedUser = userService.updateUserProfile(userId, profileDto);
+        UserResponseDto userResponse = userService.mapToUserResponseDto(updatedUser);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", userResponse));
     }
 }

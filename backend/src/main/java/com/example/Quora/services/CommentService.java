@@ -75,7 +75,8 @@ public class CommentService {
         UserBasicDto userDto = null;
         if (comment.getUser() != null) {
             User user = comment.getUser();
-            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail());
+            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
+                    user.getProfilePicture());
         }
 
         return new CommentResponseDto(
