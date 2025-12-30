@@ -4,9 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.example.Quora.models.Answer;
-import com.example.Quora.models.Comment;
-import com.example.Quora.models.Question;
 import com.example.Quora.models.Tag;
 
 import lombok.AllArgsConstructor;
@@ -50,15 +47,15 @@ public class UserProfileDto {
 
     private Long followingCount;
 
-    private List<Question> questions;
+    private List<QuestionResponseDto> questions;
 
     private Long questionsCount;
 
-    private List<Answer> answers;
+    private List<AnswerResponseDto> answers;
 
     private Long answersCount;
 
-    private List<Comment> comments;
+    private List<CommentResponseDto> comments;
 
     private Long commentsCount;
 

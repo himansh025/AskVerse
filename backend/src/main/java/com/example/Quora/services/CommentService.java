@@ -71,7 +71,7 @@ public class CommentService {
         commentRepository.deleteById(id);
     }
 
-    private CommentResponseDto convertToResponseDto(Comment comment) {
+    public CommentResponseDto convertToResponseDto(Comment comment) {
         UserBasicDto userDto = null;
         if (comment.getUser() != null) {
             User user = comment.getUser();

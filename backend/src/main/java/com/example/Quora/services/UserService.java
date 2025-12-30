@@ -4,6 +4,8 @@ import com.example.Quora.dtos.UserDto;
 import com.example.Quora.dtos.UserResponseDto;
 import com.example.Quora.dtos.UserProfileDto;
 import com.example.Quora.dtos.QuestionResponseDto;
+import com.example.Quora.dtos.AnswerResponseDto;
+import com.example.Quora.dtos.CommentResponseDto;
 import com.example.Quora.models.Tag;
 import com.example.Quora.models.User;
 import com.example.Quora.repository.TagRepository;
@@ -12,6 +14,8 @@ import com.example.Quora.repository.QuestionRepository;
 import com.example.Quora.repository.AnswerRepository;
 import com.example.Quora.repository.CommentRepository;
 import com.example.Quora.services.QuestionService;
+import com.example.Quora.services.AnswerService;
+import com.example.Quora.services.CommentService;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,6 +44,12 @@ public class UserService {
 
     @Autowired
     private QuestionService questionService;
+
+    @Autowired
+    private AnswerService answerService;
+
+    @Autowired
+    private CommentService commentService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -130,6 +140,20 @@ public class UserService {
                 .map(questionService::mapToDto)
                 .collect(Collectors.toList());
 
+        // Get user's answers
+        List<AnswerResponseDto> answers = answerRepository.findAll()
+                .stream()
+                .filter(a -> a.getUser() != null && a.getUser().getId().equals(userId))
+                .map(answer -> answerService.convertToResponseDto(answer))
+                .collect(Collectors.toList());
+
+        // Get user's comments
+        List<CommentResponseDto> comments = commentRepository.findAll()
+                .stream()
+                .filter(c -> c.getUser() != null && c.getUser().getId().equals(userId))
+                .map(comment -> commentService.convertToResponseDto(comment))
+                .collect(Collectors.toList());
+
         // Get followed tags
         List<Tag> followedTags = user.getFollowedTags()
                 .stream()
@@ -149,18 +173,12 @@ public class UserService {
                 .dob(user.getDob())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
-                .questions(null) // Will use DTOs instead
+                .questions(questions)
                 .questionsCount((long) questions.size())
-                .answers(null) // Will use DTOs instead
-                .answersCount(answerRepository.findAll()
-                        .stream()
-                        .filter(a -> a.getUser() != null && a.getUser().getId().equals(userId))
-                        .count())
-                .comments(null) // Will use DTOs instead
-                .commentsCount(commentRepository.findAll()
-                        .stream()
-                        .filter(c -> c.getUser() != null && c.getUser().getId().equals(userId))
-                        .count())
+                .answers(answers)
+                .answersCount((long) answers.size())
+                .comments(comments)
+                .commentsCount((long) comments.size())
                 .followedTags(followedTags)
                 .createdTags(null) // TODO: implement if needed
                 .build();

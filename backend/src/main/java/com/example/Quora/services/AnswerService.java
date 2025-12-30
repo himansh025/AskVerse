@@ -57,7 +57,7 @@ public class AnswerService {
         answerRepository.deleteById(id);
     }
 
-    private AnswerResponseDto convertToResponseDto(Answer answer) {
+    public AnswerResponseDto convertToResponseDto(Answer answer) {
         UserBasicDto userDto = null;
         if (answer.getUser() != null) {
             User user = answer.getUser();
