@@ -57,11 +57,12 @@ public class AnswerService {
         answerRepository.deleteById(id);
     }
 
-    private AnswerResponseDto convertToResponseDto(Answer answer) {
+    public AnswerResponseDto convertToResponseDto(Answer answer) {
         UserBasicDto userDto = null;
         if (answer.getUser() != null) {
             User user = answer.getUser();
-            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail());
+            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
+                    user.getProfilePicture());
         }
 
         return new AnswerResponseDto(

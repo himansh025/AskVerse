@@ -17,15 +17,15 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const { data } = await axiosInstance.post('/api/v1/users/signup', form);
-      console.log('Signup data:', data);
-
+      await axiosInstance.post('/api/v1/users/signup', form);
+      // console.log('Signup data:', data);
+      alert("Signup successful");
       // Assuming signup returns user data, dispatch login
       // dispatch(login({ user: data, token: null })); // Token from login
       navigate('/login');
     } catch (error: any) {
-
-      console.error('Signup error:', error);
+      alert(`Signup failed ${error}`);
+      // console.error('Signup error:', error);
     } finally {
       setLoading(false);
     }

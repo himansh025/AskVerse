@@ -27,7 +27,7 @@ export default function TagsPage() {
         let data: Tag[] = [];
         try {
           const res = await axiosInstance.get('/api/v1/tags');
-          console.log(res);
+          // console.log(res);
           data = res.data;
         } catch (err: any) {
           if (err.response?.status === 404) {
@@ -64,7 +64,7 @@ export default function TagsPage() {
 
     try {
       await axiosInstance.post(`/api/v1/users/${user.id}/followTag/${tagId}`);
-      console.log(`Now following tag ${tagId}`);
+      // console.log(`Now following tag ${tagId}`);
       // Optional: refetch user or tags
     } catch (error: any) {
       console.error('Failed to follow tag:', error);

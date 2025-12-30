@@ -71,11 +71,12 @@ public class CommentService {
         commentRepository.deleteById(id);
     }
 
-    private CommentResponseDto convertToResponseDto(Comment comment) {
+    public CommentResponseDto convertToResponseDto(Comment comment) {
         UserBasicDto userDto = null;
         if (comment.getUser() != null) {
             User user = comment.getUser();
-            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail());
+            userDto = new UserBasicDto(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
+                    user.getProfilePicture());
         }
 
         return new CommentResponseDto(
