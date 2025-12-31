@@ -61,8 +61,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route element={<ProtectedRoute />}>
             <Route path="/" element={<FeedPage />} />
+          <Route element={<ProtectedRoute />}>
             <Route path="/ask" element={<AskQuestionPage />} />
             <Route path="/question/:id" element={<QuestionDetailsPage />} />
             <Route path="/tags" element={<TagsPage />} />
