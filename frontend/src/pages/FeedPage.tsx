@@ -17,7 +17,6 @@ export default function FeedPage() {
   const navigate = useNavigate();
   const [allFeed, setAllFeed] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearch, setIsSearch] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -89,11 +88,9 @@ export default function FeedPage() {
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFeed(allFeed);
-      setIsSearch(false);
       return;
     }
 
-    setIsSearch(true);
 
     const filtered = allFeed.filter((q) =>
       q.title.toLowerCase().includes(searchQuery.toLowerCase())
