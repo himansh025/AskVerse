@@ -7,6 +7,7 @@ import axiosInstance from '../config/api.ts';
 import QuestionList from '../features/questions/QuestionList.tsx';
 import Loader from '../components/Loader.tsx';
 import Button from '../components/Button.tsx';
+import { SearchBar } from '../components/SearchBar.tsx';
 
 export default function FeedPage() {
   const [feed, setFeed] = useState<any[]>([]);
@@ -14,6 +15,9 @@ export default function FeedPage() {
   const { user, token } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [allFeed, setAllFeed] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearch, setIsSearch] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -41,35 +45,66 @@ export default function FeedPage() {
 
 
   useEffect(() => {
-    const loadFeed = async () => {
-      if (!user?.id) return;                 // wait for user
+    const loadUserFeed = async () => {
+      if (!user?.id) return;
       setIsLoading(true);
       try {
         const { data } = await axiosInstance.get(
           `/api/v1/feed/${user.id}?page=0&size=10`
         );
-        // Extract feed data from ApiResponse wrapper
         const feedData = data.data || data;
+        setAllFeed(feedData);
         setFeed(feedData);
       } catch (err) {
-        console.error('Error fetching feed:', err);
-        // Fallback to all questions if feed fails
-        // try {
-        //   const { data } = await axiosInstance.get(
-        //     `/api/v1/questions/all?page=0&size=10`
-        //   );
-        //   const questionsData = data.data || data;
-        //   setFeed(questionsData);
-        // } catch (fallbackErr) {
-        //   console.error('Error fetching questions:', fallbackErr);
-        // }
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadFeed();
-  }, [user?.id]);
+    const loadFeed = async () => {
+      setIsLoading(true);
+      try {
+        const { data } = await axiosInstance.get(
+          `/api/v1/questions/all?page=0&size=10`
+        );
+        const feedData = data.data || data;
+        setAllFeed(feedData);
+        setFeed(feedData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      loadUserFeed();
+    } else {
+      loadFeed();
+    }
+  }, [user]);
+
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFeed(allFeed);
+      setIsSearch(false);
+      return;
+    }
+
+    setIsSearch(true);
+
+    const filtered = allFeed.filter((q) =>
+      q.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    setFeed(filtered);
+  }, [searchQuery, allFeed]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
 
 
   if (isLoading) {
@@ -89,6 +124,9 @@ export default function FeedPage() {
             <h1 className="text-5xl font-bold  mb-2" style={{ color: '#07528f' }}>Your Feed</h1>
             <p className="text-gray-600 text-lg">Discover questions from topics you follow</p>
           </div>
+          <SearchBar onSearch={handleSearch} />
+
+
           <Button
             onClick={() => navigate('/ask')}
             className="hover:to-pink-700 shadow-lg flex items-center gap-2 " style={{ backgroundColor: "#8f0752" }}

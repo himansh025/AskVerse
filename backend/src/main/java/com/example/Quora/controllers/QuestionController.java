@@ -22,8 +22,8 @@ public class QuestionController {
 
         @GetMapping("/all")
         public ResponseEntity<ApiResponse<List<QuestionResponseDto>>> getAllQuestions(
-                        @RequestParam int page,
-                        @RequestParam int size) {
+                        @RequestParam(name = "page", defaultValue = "0") int page,
+                        @RequestParam(name = "size", defaultValue = "10") int size) {
 
                 return ResponseEntity.ok(
                                 ApiResponse.success(
