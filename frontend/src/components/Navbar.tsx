@@ -135,7 +135,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/login" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/login')}`}>Login</Link>
-              <Link to="/singup" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/singup')}`}>Singup</Link>
+              <Link to="/singup" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/signup')}`}>Singup</Link>
             </>
           )}
           {user ? (
