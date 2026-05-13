@@ -42,6 +42,7 @@ public class SpringSecurity {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors().and()
                 // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
@@ -60,6 +61,7 @@ public class SpringSecurity {
                                 "/api/v1/users/profile/**",
                                 "/api/v1/users/{id}",
                                 "/api/v1/questions/**",
+                                "/api/v1/subscriptions/**",
                                 "/api/v1/tags/**",
                                 "/api/v1/answers/**",
                                 "/api/v1/comments/**")
