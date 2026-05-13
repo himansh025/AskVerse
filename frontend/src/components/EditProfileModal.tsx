@@ -25,21 +25,29 @@ const EditProfileModal = ({ isOpen, onClose, profileData, userId }: EditProfileM
         location: '',
         website: '',
         gender: '',
-    dob: ''
-                bio: profileData.bio || '',
-                location: profileData.location || '',
-                website: profileData.website || '',
-                gender: profileData.gender || '',
-                dob: profileData.dob || ''
-            });
-            setProfilePreview(
-                profileData.profilePicture ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name || 'User')}&background=07528f&color=fff&size=256`
-            );
-            setSelectedProfileImage(null);
-            setCoverPreview(profileData.coverPicture || '');
-            setSelectedCoverImage(null);
+        dob: ''
+    });
+
+    useEffect(() => {
+        if (!profileData) {
+            return;
         }
+
+        setFormData({
+            name: profileData.name || '',
+            bio: profileData.bio || '',
+            location: profileData.location || '',
+            website: profileData.website || '',
+            gender: profileData.gender || '',
+            dob: profileData.dob || ''
+        });
+        setProfilePreview(
+            profileData.profilePicture ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name || 'User')}&background=07528f&color=fff&size=256`
+        );
+        setSelectedProfileImage(null);
+        setCoverPreview(profileData.coverPicture || '');
+        setSelectedCoverImage(null);
     }, [profileData]);
 
     useEffect(() => {
