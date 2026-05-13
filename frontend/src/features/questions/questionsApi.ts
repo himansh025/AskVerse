@@ -20,14 +20,16 @@ export const questionsApi = createApi({
   tagTypes: ['Questions'],
   endpoints: (builder) => ({
     getQuestions: builder.query({
-      query: ({ page = 0, size = 5 }) => `/api/v1/questions/all?page=${page}&size=${size}`,
+      query: ({ page = 0, size = 5, viewerUserId }) =>
+        `/api/v1/questions/all?page=${page}&size=${size}${viewerUserId ? `&viewerUserId=${viewerUserId}` : ''}`,
       transformResponse: (response: any) => response.data || response,
       providesTags: ['Questions'],
     }),
     getQuestionById: builder.query({
-      query: (id) => `/api/v1/questions/${id}`,
+      query: ({ id, viewerUserId }) =>
+        `/api/v1/questions/${id}${viewerUserId ? `?viewerUserId=${viewerUserId}` : ''}`,
       transformResponse: (response: any) => response.data || response,
-      providesTags: (id) => [{ type: 'Questions', id }],
+      providesTags: (_result, _error, args) => [{ type: 'Questions', id: args.id }],
     }),
     createQuestion: builder.mutation({
       query: (body) => ({

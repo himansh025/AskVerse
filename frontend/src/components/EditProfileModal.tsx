@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, User, MapPin, Globe, Calendar, FileText, Image, Camera } from 'lucide-react';
+import { X, User, MapPin, Globe, Calendar, FileText, Image, Camera, Upload } from 'lucide-react';
 import axiosInstance from '../config/api';
 import { useDispatch } from 'react-redux';
 import { setProfileData } from '../store/dataSlicer';
+import { updateUser } from '../features/auth/authSlice.ts';
 
 interface EditProfileModalProps {
     isOpen: boolean;
@@ -14,31 +15,58 @@ interface EditProfileModalProps {
 const EditProfileModal = ({ isOpen, onClose, profileData, userId }: EditProfileModalProps) => {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
+    const [selectedProfileImage, setSelectedProfileImage] = useState<File | null>(null);
+    const [profilePreview, setProfilePreview] = useState('');
+    const [selectedCoverImage, setSelectedCoverImage] = useState<File | null>(null);
+    const [coverPreview, setCoverPreview] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         bio: '',
         location: '',
         website: '',
         gender: '',
-        dob: '',
-        profilePicture: '',
-        coverPicture: ''
-    });
-
-    useEffect(() => {
-        if (profileData) {
-            setFormData({
-                name: profileData.name || '',
+    dob: ''
                 bio: profileData.bio || '',
                 location: profileData.location || '',
                 website: profileData.website || '',
                 gender: profileData.gender || '',
-                dob: profileData.dob || '',
-                profilePicture: profileData.profilePicture || '',
-                coverPicture: profileData.coverPicture || ''
+                dob: profileData.dob || ''
             });
+            setProfilePreview(
+                profileData.profilePicture ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.name || 'User')}&background=07528f&color=fff&size=256`
+            );
+            setSelectedProfileImage(null);
+            setCoverPreview(profileData.coverPicture || '');
+            setSelectedCoverImage(null);
         }
     }, [profileData]);
+
+    useEffect(() => {
+        if (!selectedProfileImage) {
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(selectedProfileImage);
+        setProfilePreview(objectUrl);
+
+        return () => {
+            URL.revokeObjectURL(objectUrl);
+        };
+    }, [selectedProfileImage]);
+
+    useEffect(() => {
+        if (!selectedCoverImage) {
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(selectedCoverImage);
+        setCoverPreview(objectUrl);
+
+        return () => {
+            URL.revokeObjectURL(objectUrl);
+        };
+    }, [selectedCoverImage]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -48,17 +76,52 @@ const EditProfileModal = ({ isOpen, onClose, profileData, userId }: EditProfileM
         }));
     };
 
+    const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setSelectedProfileImage(file);
+        e.target.value = '';
+    };
+
+    const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setSelectedCoverImage(file);
+        e.target.value = '';
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
             setLoading(true);
-            const response = await axiosInstance.put(`/api/v1/users/profile/${userId}`, formData);
+            const payload = new FormData();
+            payload.append('name', formData.name);
+            payload.append('bio', formData.bio);
+            payload.append('location', formData.location);
+            payload.append('website', formData.website);
+            payload.append('gender', formData.gender);
+            if (formData.dob) {
+                payload.append('dob', formData.dob);
+            }
+            if (selectedProfileImage) {
+                payload.append('profileImage', selectedProfileImage);
+            }
+            if (selectedCoverImage) {
+                payload.append('coverImage', selectedCoverImage);
+            }
+
+            const response = await axiosInstance.put(`/api/v1/users/profile/${userId}`, payload, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
 
             if (response) {
                 // Fetch updated profile data
                 const profileResponse = await axiosInstance.get(`/api/v1/users/profile/${userId}`);
                 dispatch(setProfileData(profileResponse.data.data));
+                dispatch(updateUser(profileResponse.data.data));
 
                 // Show success message
                 alert('Profile updated successfully!');
@@ -90,6 +153,35 @@ const EditProfileModal = ({ isOpen, onClose, profileData, userId }: EditProfileM
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                            <Camera size={18} className="text-[#07528f]" />
+                            Profile Image
+                        </label>
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-gray-100 shadow-md">
+                                <img
+                                    src={profilePreview}
+                                    alt={formData.name || 'Profile preview'}
+                                    className="h-full w-full object-cover"
+                                />
+                            </div>
+                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#07528f] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#064070]">
+                                <Upload size={16} />
+                                Upload new photo
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleProfileImageChange}
+                                    className="hidden"
+                                />
+                            </label>
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                            Upload an image file. It will be stored in Cloudinary and used across your profile and navbar.
+                        </p>
+                    </div>
+
                     {/* Name */}
                     <div>
                         <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
@@ -194,36 +286,36 @@ const EditProfileModal = ({ isOpen, onClose, profileData, userId }: EditProfileM
                         </div>
                     </div>
 
-                    {/* Profile Picture URL */}
+                    {/* Cover Picture */}
                     <div>
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                            <Camera size={18} className="text-[#07528f]" />
-                            Profile Picture URL
-                        </label>
-                        <input
-                            type="url"
-                            name="profilePicture"
-                            value={formData.profilePicture}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#07528f] focus:border-transparent transition-all outline-none"
-                            placeholder="https://example.com/profile.jpg"
-                        />
-                    </div>
-
-                    {/* Cover Picture URL */}
-                    <div>
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
                             <Image size={18} className="text-[#07528f]" />
-                            Cover Picture URL
+                            Cover Picture
                         </label>
-                        <input
-                            type="url"
-                            name="coverPicture"
-                            value={formData.coverPicture}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#07528f] focus:border-transparent transition-all outline-none"
-                            placeholder="https://example.com/cover.jpg"
-                        />
+                        <div className="flex flex-col gap-4">
+                            {coverPreview && (
+                                <div className="h-24 w-full overflow-hidden rounded-lg border-4 border-white bg-gray-100 shadow-md">
+                                    <img
+                                        src={coverPreview}
+                                        alt="Cover preview"
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
+                            )}
+                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#07528f] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#064070]">
+                                <Upload size={16} />
+                                Upload new cover
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleCoverImageChange}
+                                    className="hidden"
+                                />
+                            </label>
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                            Upload a cover image file. It will be stored in Cloudinary.
+                        </p>
                     </div>
 
                     {/* Action Buttons */}

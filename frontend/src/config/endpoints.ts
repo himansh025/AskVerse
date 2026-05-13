@@ -1,5 +1,3 @@
-// src/api/endpoints.ts
-// export const API_BASE = 'https://askverse-db8w.onrender.com';
 export const API_BASE = import.meta.env.VITE_API_URL;
 
 export const ENDPOINTS = {
@@ -18,6 +16,12 @@ export const ENDPOINTS = {
   COMMENTS_BY_COMMENT: (commentId: number) => `/api/v1/comments/comment/${commentId}`,
   COMMENT_BY_ID: (id: number) => `/api/v1/comments/${id}`,
   FEED: (userId: number) => `/api/v1/feed/${userId}`,
+  SUBSCRIPTION_CREATOR: (creatorId: number, viewerUserId?: number) =>
+    `/api/v1/subscriptions/creator?creatorId=${creatorId}${viewerUserId ? `&viewerUserId=${viewerUserId}` : ''}`,
+  SUBSCRIPTION_STATUS: (creatorId: number, subscriberId: number) =>
+    `/api/v1/subscriptions/status?creatorId=${creatorId}&subscriberId=${subscriberId}`,
+  SUBSCRIPTION_CHECKOUT: '/api/v1/subscriptions/checkout',
+  SUBSCRIPTION_CONFIRM: '/api/v1/subscriptions/confirm',
   // Assuming tags endpoint exists based on spec inference
   TAGS: '/api/v1/tags',
 };

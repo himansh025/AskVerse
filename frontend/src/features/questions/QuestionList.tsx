@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Clock} from 'lucide-react';
+import { ArrowUpRight, Clock, Lock, Sparkles } from 'lucide-react';
 // import { MessageSquare, ThumbsUp, Eye, Clock, Bookmark } from 'lucide-react';
 import Card from '../../components/Card';
 
@@ -23,7 +23,12 @@ const topicImages: Record<string, string> = {
 };
 
 // Get image based on tags
-const getQuestionImage = (tags: string[]) => {
+const getQuestionImage = (question: any) => {
+  if (question?.thumbnailUrl) {
+    return question.thumbnailUrl;
+  }
+
+  const tags = question?.tags;
   if (!tags || tags.length === 0) return topicImages.default;
 
   const firstTag = tags[0].toLowerCase();
@@ -40,7 +45,7 @@ const gradients = [
 ];
 
 const formatTimeAgo = (dateString: string) => {
-  if (!dateString) return 'recently';
+  if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -59,12 +64,11 @@ export default function QuestionList({ questions }: QuestionListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {questions.map((q, index) => {
-        const imageUrl = getQuestionImage(q.tags);
+        const imageUrl = getQuestionImage(q);
         const fallbackGradient = gradients[index % gradients.length];
 
         return (
-          <Card key={q.id} className="overflow-hidden group relative bg-white hover:shadow-xl transition-all duration-300 border border-gray-100">
-            {/* Image Section */}
+          <Card key={q.id} className="group relative overflow-hidden p-0">
             <div className="relative h-48 overflow-hidden">
               <div
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -78,73 +82,76 @@ export default function QuestionList({ questions }: QuestionListProps) {
                   target.style.background = fallbackGradient;
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-900/20 to-transparent" />
 
-              {/* Tags on Image */}
               <div className="absolute bottom-3 left-3 flex flex-wrap gap-2 z-10">
+                {q.premiumContent ? (
+                  <span className="rounded-full border border-amber-200/50 bg-amber-400/90 px-3 py-1 text-xs font-semibold text-slate-900 shadow-sm">
+                    <span className="inline-flex items-center gap-1">
+                      <Lock size={12} />
+                      Premium
+                    </span>
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-white/15 bg-white/16 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
+                    <span className="inline-flex items-center gap-1">
+                      <Sparkles size={12} />
+                      Public
+                    </span>
+                  </span>
+                )}
                 {q.tags?.slice(0, 2).map((tag: string) => (
                   <span
                     key={tag}
-                    className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-medium text-white backdrop-blur-md transition-colors border border-white/10"
+                    className="rounded-full border border-white/15 bg-white/16 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/25"
                   >
                     #{tag}
                   </span>
                 ))}
                 {q.tags?.length > 2 && (
-                  <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-medium text-white backdrop-blur-md border border-white/10">
+                  <span className="rounded-full border border-white/15 bg-white/16 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
                     +{q.tags.length - 2}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Content Section */}
             <div className="p-6">
-              <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
+              <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
                 <div className="flex items-center gap-1">
-                  <div className="w-5 h-5 rounded-full bg-[#8f0752] flex items-center justify-center text-white text-[10px] font-bold">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] text-[10px] font-bold text-white">
                     {q.username?.[0]?.toUpperCase() || 'U'}
                   </div>
-                  <span className="font-medium text-gray-700">{q.username || 'Anonymous'}</span>
+                  <span className="font-semibold text-slate-700">{q.username || 'Anonymous'}</span>
                 </div>
-                <span>•</span>
-                <div className="flex items-center gap-1">
-                  <Clock size={12} />
-                  <span>{formatTimeAgo(q.createdAt)}</span>
-                </div>
+                {q.createdAt && (
+                  <>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <Clock size={12} />
+                      <span>{formatTimeAgo(q.createdAt)}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
-              <Link to={`/question/${q.id}`} className="group block mb-3">
-                <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#07528f] transition-colors line-clamp-2 leading-tight">
+              <Link to={`/question/${q.id}`} className="mb-3 block">
+                <h3 className="font-brand line-clamp-2 text-2xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-[var(--color-brand)]">
                   {q.title}
                 </h3>
               </Link>
 
-              <p className="text-gray-600 text-sm line-clamp-3 mb-6 leading-relaxed">
+              <p className="mb-6 line-clamp-3 text-sm leading-7 text-slate-600">
                 {q.content}
               </p>
 
-              {/* Footer Stats */}
-              {/* <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm text-gray-500">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 hover:text-[#07528f] transition-colors" title="Votes">
-                    <ThumbsUp size={16} />
-                    <span className="font-medium">{q.voteCount || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 hover:text-[#07528f] transition-colors" title="Answers">
-                    <MessageSquare size={16} />
-                    <span className="font-medium">{q.answerCount || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 hover:text-[#07528f] transition-colors" title="Views">
-                    <Eye size={16} />
-                    <span className="font-medium">{q.viewCount || 0}</span>
-                  </div>
-                </div>
-
-                <button className="text-gray-400 hover:text-[#8f0752] transition-colors">
-                  <Bookmark size={18} />
-                </button>
-              </div> */}
+              <Link
+                to={`/question/${q.id}`}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-brand)] transition-colors hover:text-[var(--color-accent)]"
+              >
+                {q.locked ? 'Preview and subscribe' : 'Read discussion'}
+                <ArrowUpRight size={16} />
+              </Link>
             </div>
           </Card>
         );

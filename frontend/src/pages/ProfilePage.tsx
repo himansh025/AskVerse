@@ -1,32 +1,45 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
-  MapPin,
-  Calendar,
-  Edit3,
-  MessageSquare,
   Activity,
+  BadgeDollarSign,
+  Calendar,
+  Camera,
+  Edit3,
   FileText,
+  Globe,
+  Lock,
+  MapPin,
+  MessageSquare,
+  Settings,
+  Sparkles,
   Tag,
-  Settings
+  UserRound,
 } from 'lucide-react';
 import Loader from '../components/Loader.tsx';
 import axiosInstance from '../config/api.ts';
 import { setProfileData } from '../store/dataSlicer.ts';
-import EditProfileModal from '../components/EditProfileModal.tsx';
+import { updateUser } from '../features/auth/authSlice.ts';
 
 export default function ProfilePage() {
   const { user } = useSelector((state: any) => state.auth);
   const { profileData } = useSelector((state: any) => state.data);
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
   const dispatch = useDispatch();
-  const [updateModel, setUpdateModel] = useState(false)
+  const navigate = useNavigate();
+
+  const profileImageUrl =
+    profileData?.profilePicture ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.name || 'User')}&background=07528f&color=fff&size=256`;
+  const coverImageUrl = profileData?.coverPicture || null;
 
   const getUserProfile = async () => {
-
     try {
-      setLoading(true)
+      setLoading(true);
       const userId = user?.id;
       const response = await axiosInstance.get(`/api/v1/users/profile/${userId}`);
       dispatch(setProfileData(response.data.data));
@@ -35,279 +48,482 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  }
-
+  };
 
   const handleEditProfile = () => {
-    setUpdateModel(true);
-  }
+    navigate('/profile/edit');
+  };
 
-  const handleCloseModal = () => {
-    setUpdateModel(false);
-  }
+  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) {
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+      const payload = new FormData();
+      payload.append('profileImage', file);
+
+      await axiosInstance.put(`/api/v1/users/profile/${user.id}`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const profileResponse = await axiosInstance.get(`/api/v1/users/profile/${user.id}`);
+      const updatedProfile = profileResponse.data.data;
+      dispatch(setProfileData(updatedProfile));
+      dispatch(updateUser(updatedProfile));
+    } catch (error: any) {
+      console.error('Error uploading profile image:', error);
+      alert(error.response?.data?.message || 'Failed to upload profile image');
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleCoverImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) {
+      return;
+    }
+
+    try {
+      setUploadingCover(true);
+      const payload = new FormData();
+      payload.append('coverImage', file);
+
+      await axiosInstance.put(`/api/v1/users/profile/${user.id}`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const profileResponse = await axiosInstance.get(`/api/v1/users/profile/${user.id}`);
+      const updatedProfile = profileResponse.data.data;
+      dispatch(setProfileData(updatedProfile));
+      dispatch(updateUser(updatedProfile));
+    } catch (error: any) {
+      console.error('Error uploading cover image:', error);
+      alert(error.response?.data?.message || 'Failed to upload cover image');
+    } finally {
+      setUploadingCover(false);
+      event.target.value = '';
+    }
+  };
 
   useEffect(() => {
     if (user?.id && !profileData) {
       getUserProfile();
     }
-
   }, [user]);
+
+  const joinedLabel = useMemo(() => {
+    if (!profileData?.createdAt) {
+      return 'Recently joined';
+    }
+
+    const parsed = new Date(profileData.createdAt);
+    if (Number.isNaN(parsed.getTime())) {
+      return String(profileData.createdAt);
+    }
+
+    return parsed.toLocaleDateString(undefined, {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }, [profileData?.createdAt]);
+
+  const statCards = [
+    { label: 'Questions', value: profileData?.questionsCount || 0, tone: 'bg-[#165d86]/10 text-[#165d86]' },
+    { label: 'Answers', value: profileData?.answersCount || 0, tone: 'bg-emerald-500/10 text-emerald-700' },
+    { label: 'Comments', value: profileData?.commentsCount || 0, tone: 'bg-amber-500/10 text-amber-700' },
+    { label: 'Subscribers', value: profileData?.activeSubscriberCount || 0, tone: 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]' },
+  ];
 
   if (loading) return <Loader />;
 
-
   return (
-    <>
-      {/* Edit Profile Modal */}
-      <EditProfileModal
-        isOpen={updateModel}
-        onClose={handleCloseModal}
-        profileData={profileData}
-        userId={user?.id}
-      />
+    <div className="space-y-8 pb-12">
+      <section className="shell-surface overflow-hidden rounded-[36px]">
+        <div className="relative h-56 overflow-hidden md:h-72">
+          {coverImageUrl ? (
+            <img
+              src={coverImageUrl}
+              alt={`${profileData?.name || 'User'} cover`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full bg-[linear-gradient(120deg,#0f4f73_0%,#1b6b96_36%,#b34e68_100%)]" />
+          )}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,25,38,0.04),rgba(12,25,38,0.38))]" />
 
-      <div className="min-h-screen bg-gray-50 pb-12">
-        {/* Cover Photo */}
-        <div className="h-48 md:h-64 w-full bg-gradient-to-r from-[#07528f] to-[#8f0752] relative">
-          <div className="absolute bottom-4 right-4">
+          <div className="absolute right-4 top-4 flex items-center gap-3 sm:right-6">
+            {uploadingCover ? (
+              <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#165d86] shadow-sm">
+                Uploading cover...
+              </span>
+            ) : null}
+            <label
+              htmlFor="profile-cover-upload"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/60 bg-white/88 px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:bg-white"
+            >
+              <Camera size={16} />
+              Change cover
+            </label>
+            <input
+              id="profile-cover-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleCoverImageUpload}
+              className="hidden"
+            />
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative -mt-20 mb-8">
-            <div className="flex flex-col md:flex-row items-end gap-6">
-              {/* Profile Picture */}
+        <div className="px-5 pb-6 sm:px-8 lg:px-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="-mt-16 flex flex-col gap-5 sm:-mt-20 md:flex-row md:items-end">
               <div className="relative">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden">
+                <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-white shadow-[0_24px_50px_rgba(21,35,58,0.18)] md:h-40 md:w-40">
                   <img
-                    src={profileData?.profile ||`https://ui-avatars.com/api/?name=${profileData?.name}&background=07528f&color=fff&size=256`}
+                    src={profileImageUrl}
                     alt={profileData?.name}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
                 </div>
-                <button className="absolute bottom-2 right-2 bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors border border-gray-200">
+                <label
+                  htmlFor="profile-avatar-upload"
+                  className="absolute bottom-2 right-2 cursor-pointer rounded-full border border-white bg-white p-2.5 text-slate-700 shadow-md transition-colors hover:bg-slate-50"
+                  title="Upload profile photo"
+                >
                   <Edit3 size={16} />
-                </button>
+                </label>
+                <input
+                  id="profile-avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageUpload}
+                  className="hidden"
+                />
+                {uploadingAvatar ? (
+                  <div className="absolute inset-x-0 -bottom-8 text-center text-xs font-semibold text-[#165d86]">
+                    Uploading photo...
+                  </div>
+                ) : null}
               </div>
 
-              {/* Profile Info */}
-              <div className="flex-1 pb-2 text-center mt-10 md:text-left">
-                <h1 className="text-3xl font-bold text-gray-900">{profileData?.name}</h1>
-                <p className="text-gray-600 font-medium mt-2">@{profileData?.username}</p>
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-2 text-sm text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <MapPin size={16} /> {profileData?.location || "Not specified"}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Calendar size={16} /> Joined {profileData?.createdAt || "Not specified"}
-                  </span>
+              <div className="max-w-2xl">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/86 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                  <UserRound size={14} />
+                  Public profile
                 </div>
+                <h1 className="font-brand text-3xl font-bold text-slate-900 md:text-4xl">
+                  {profileData?.name || 'Your profile'}
+                </h1>
+                <p className="mt-2 text-lg font-medium text-slate-500">@{profileData?.username}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin size={16} />
+                    {profileData?.location || 'Location not added'}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <Calendar size={16} />
+                    Joined {joinedLabel}
+                  </span>
+                  {profileData?.website ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Globe size={16} />
+                      <a
+                        href={profileData.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-[#165d86] hover:underline"
+                      >
+                        {profileData.website}
+                      </a>
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                  {profileData?.bio || 'Add a short bio to tell people what you like to ask, answer, and explore on AskVerse.'}
+                </p>
               </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 mb-4 md:mb-2">
-                <button onClick={() => { handleEditProfile() }} className="bg-[#07528f] text-white px-6 py-2.5 rounded-full font-medium hover:bg-[#064070] transition-colors shadow-sm flex items-center gap-2">
-                  <Edit3 size={18} /> Edit Profile
-                </button>
-                <button className="bg-white text-gray-700 px-4 py-2.5 rounded-full font-medium hover:bg-gray-50 transition-colors border border-gray-300 shadow-sm">
-                  <Settings size={18} />
-                </button>
-              </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={handleEditProfile}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#165d86] px-6 py-3 font-semibold text-white shadow-[0_18px_36px_rgba(22,93,134,0.20)] transition-all hover:-translate-y-0.5 hover:bg-[#124a6b]"
+              >
+                <Edit3 size={18} />
+                Edit Profile
+              </button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                <Settings size={18} />
+                Settings
+              </button>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-1 text-[#07528f]">
-                {stat.icon}
-                <span className="text-sm font-medium text-gray-500">{stat.label}</span>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {statCards.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-[24px] border border-white/70 bg-white/82 p-5 shadow-[0_18px_40px_rgba(21,35,58,0.08)]"
+              >
+                <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${stat.tone}`}>
+                  {stat.label}
+                </div>
+                <p className="mt-4 text-3xl font-bold text-slate-900">{stat.value}</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{profileData?.state}</p>
-            </div>
-          ))}
-        </div> */}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content - Tabs */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px]">
-                <div className="flex border-b border-gray-200">
-                  {['About', 'Questions', 'Answers', 'Activity'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab.toLowerCase())}
-                      className={`flex-1 py-4 text-sm font-medium text-center transition-colors relative ${activeTab === tab.toLowerCase()
-                        ? 'text-[#07528f]'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
-                    >
-                      {tab}
-                      {activeTab === tab.toLowerCase() && (
-                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#07528f]" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-6">
-                  {activeTab === 'about' && (
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Bio</h3>
-                        <p className="text-gray-600 leading-relaxed">
-                          {profileData?.bio || "No bio added yet."}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Skills & Interests</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {profileData?.skills && profileData.skills.length > 0 ? (
-                            profileData.skills.map((skill: any) => (
-                              <span key={skill} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium">
-                                {skill}
-                              </span>
-                            ))
-                          ) : (
-                            <p className="text-gray-500 text-sm italic">No skills added yet.</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <p className="text-sm text-gray-600">Questions</p>
-                          <p className="text-2xl font-bold text-[#07528f]">{profileData?.questionsCount || 0}</p>
-                        </div>
-                        <div className="bg-green-50 p-4 rounded-lg">
-                          <p className="text-sm text-gray-600">Answers</p>
-                          <p className="text-2xl font-bold text-green-600">{profileData?.answersCount || 0}</p>
-                        </div>
-                        <div className="bg-purple-50 p-4 rounded-lg">
-                          <p className="text-sm text-gray-600">Comments</p>
-                          <p className="text-2xl font-bold text-purple-600">{profileData?.commentsCount || 0}</p>
-                        </div>
-                        <div className="bg-orange-50 p-4 rounded-lg">
-                          <p className="text-sm text-gray-600">Followed Tags</p>
-                          <p className="text-2xl font-bold text-orange-600">{profileData?.followedTags?.length || 0}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'questions' && (
-                    <div className="space-y-4">
-                      {profileData?.questions && profileData.questions.length > 0 ? (
-                        profileData.questions.map((question: any) => (
-                          <div key={question.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                            <h4 className="text-lg font-semibold text-gray-900 mb-2">{question.title}</h4>
-                            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{question.content}</p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex flex-wrap gap-2">
-                                {question.tags?.map((tag: any) => (
-                                  <span key={tag.id} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                                    {tag.name}
-                                  </span>
-                                ))}
-                              </div>
-                              <span className="text-xs text-gray-500">
-                                {new Date(question.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-                          <MessageSquare size={48} className="mb-4 opacity-50" />
-                          <p>No questions posted yet.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {activeTab === 'answers' && (
-                    <div className="space-y-4">
-                      {profileData?.answers && profileData.answers.length > 0 ? (
-                        profileData.answers.map((answer: any) => (
-                          <div key={answer.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                            <p className="text-gray-700 mb-3">{answer.content}</p>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-500">
-                                On: <span className="font-medium text-gray-700">{answer.question?.title}</span>
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {new Date(answer.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-                          <FileText size={48} className="mb-4 opacity-50" />
-                          <p>No answers posted yet.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {activeTab === 'activity' && (
-                    <div className="space-y-4">
-                      {profileData?.comments && profileData.comments.length > 0 ? (
-                        profileData.comments.map((comment: any) => (
-                          <div key={comment.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                            <p className="text-gray-700 mb-2">{comment.content}</p>
-                            <span className="text-xs text-gray-500">
-                              {new Date(comment.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-                          <Activity size={48} className="mb-4 opacity-50" />
-                          <p>No activity to show yet.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar - Followed Tags */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Followed Tags</h3>
-                  <span className="bg-[#07528f]/10 text-[#07528f] text-xs font-bold px-2 py-1 rounded-full">
-                    {profileData?.followedTags?.length || 0}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {profileData?.followedTags?.length > 0 ? (
-                    profileData?.followedTags?.map((tag: any) => (
-                      <div key={tag.id} className="group flex items-center gap-2 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-1.5 rounded-full transition-all cursor-pointer">
-                        <Tag size={14} className="text-gray-400 group-hover:text-[#07528f]" />
-                        <span className="text-sm text-gray-700 group-hover:text-[#07528f] font-medium">
-                          {tag.name}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-sm italic">No tags followed yet.</p>
-                  )}
-                </div>
-
-                <button className="w-full mt-6 text-[#07528f] text-sm font-medium hover:underline flex items-center justify-center gap-1">
-                  View all tags
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
+      </section>
+
+      <div className="grid gap-8 xl:grid-cols-[1.65fr_0.8fr]">
+        <section className="shell-surface overflow-hidden rounded-[32px]">
+          <div className="border-b border-slate-200/80 px-3 py-3 sm:px-5">
+            <div className="flex flex-wrap gap-2">
+              {['About', 'Questions', 'Answers', 'Activity'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab.toLowerCase())}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                    activeTab === tab.toLowerCase()
+                      ? 'bg-slate-900 text-white shadow-[0_14px_28px_rgba(21,35,58,0.16)]'
+                      : 'text-slate-500 hover:bg-white hover:text-slate-900'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            {activeTab === 'about' && (
+              <div className="space-y-8">
+                <div className="rounded-[24px] border border-slate-200 bg-white/75 p-6">
+                  <h3 className="font-brand text-2xl font-bold text-slate-900">About</h3>
+                  <p className="mt-3 leading-7 text-slate-600">
+                    {profileData?.bio || 'No bio added yet. This is where a strong intro helps people understand what topics you care about.'}
+                  </p>
+                </div>
+
+                <div className="rounded-[24px] border border-slate-200 bg-white/75 p-6">
+                  <h3 className="font-brand text-2xl font-bold text-slate-900">Skills & Interests</h3>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {profileData?.skills && profileData.skills.length > 0 ? (
+                      profileData.skills.map((skill: any) => (
+                        <span
+                          key={skill}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700"
+                        >
+                          {skill}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-sm italic text-slate-500">No skills added yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'questions' && (
+              <div className="space-y-4">
+                {profileData?.questions && profileData.questions.length > 0 ? (
+                  profileData.questions.map((question: any) => (
+                    <div
+                      key={question.id}
+                      className="rounded-[24px] border border-slate-200 bg-white/75 p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(21,35,58,0.08)]"
+                    >
+                      <h4 className="text-xl font-semibold text-slate-900">{question.title}</h4>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {question.premiumContent ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                            <Lock size={12} />
+                            Premium
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            <Sparkles size={12} />
+                            Public
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm leading-7 text-slate-600">{question.content}</p>
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap gap-2">
+                          {question.tags?.map((tag: any) => (
+                            <span
+                              key={tag.id ?? tag}
+                              className="rounded-full bg-[#165d86]/10 px-3 py-1 text-xs font-semibold text-[#165d86]"
+                            >
+                              #{tag.name ?? tag}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-xs font-medium text-slate-500">
+                          {question.createdAt ? new Date(question.createdAt).toLocaleDateString() : 'Just now'}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex h-64 flex-col items-center justify-center text-slate-400">
+                    <MessageSquare size={48} className="mb-4 opacity-50" />
+                    <p>No questions posted yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'answers' && (
+              <div className="space-y-4">
+                {profileData?.answers && profileData.answers.length > 0 ? (
+                  profileData.answers.map((answer: any) => (
+                    <div
+                      key={answer.id}
+                      className="rounded-[24px] border border-slate-200 bg-white/75 p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(21,35,58,0.08)]"
+                    >
+                      <p className="leading-7 text-slate-700">{answer.content}</p>
+                      <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+                        <span className="text-slate-500">
+                          On: <span className="font-medium text-slate-700">{answer.question?.title}</span>
+                        </span>
+                        <span className="text-xs font-medium text-slate-500">
+                          {answer.createdAt ? new Date(answer.createdAt).toLocaleDateString() : 'Just now'}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex h-64 flex-col items-center justify-center text-slate-400">
+                    <FileText size={48} className="mb-4 opacity-50" />
+                    <p>No answers posted yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'activity' && (
+              <div className="space-y-4">
+                {profileData?.comments && profileData.comments.length > 0 ? (
+                  profileData.comments.map((comment: any) => (
+                    <div
+                      key={comment.id}
+                      className="rounded-[24px] border border-slate-200 bg-white/75 p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(21,35,58,0.08)]"
+                    >
+                      <p className="text-slate-700">{comment.content}</p>
+                      <span className="mt-3 inline-block text-xs font-medium text-slate-500">
+                        {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : 'Just now'}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex h-64 flex-col items-center justify-center text-slate-400">
+                    <Activity size={48} className="mb-4 opacity-50" />
+                    <p>No activity to show yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <aside className="space-y-6">
+          <div className="shell-surface rounded-[32px] p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="font-brand text-2xl font-bold text-slate-900">Creator Plan</h3>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  profileData?.premiumCreatorEnabled
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-200 text-slate-600'
+                }`}
+              >
+                {profileData?.premiumCreatorEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-600">
+              <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <BadgeDollarSign size={14} />
+                  Monthly price
+                </div>
+                <p className="mt-2 font-medium text-slate-800">
+                  {profileData?.subscriptionCurrency || 'USD'} {profileData?.subscriptionPrice || '9.99'}
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Active subscribers</p>
+                <p className="mt-2 font-medium text-slate-800">{profileData?.activeSubscriberCount || 0}</p>
+              </div>
+              <p className="text-sm leading-6 text-slate-600">
+                Premium posts let you publish subscriber-only content while keeping your public questions, answers, and comments open to the community.
+              </p>
+            </div>
+          </div>
+
+          <div className="shell-surface rounded-[32px] p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="font-brand text-2xl font-bold text-slate-900">Profile Details</h3>
+              <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+                @{profileData?.username}
+              </span>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-600">
+              <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Location</p>
+                <p className="mt-2 font-medium text-slate-800">{profileData?.location || 'Not specified'}</p>
+              </div>
+              <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Website</p>
+                <p className="mt-2 break-all font-medium text-slate-800">{profileData?.website || 'Not added'}</p>
+              </div>
+              <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Gender</p>
+                <p className="mt-2 font-medium text-slate-800">{profileData?.gender || 'Not specified'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="shell-surface rounded-[32px] p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="font-brand text-2xl font-bold text-slate-900">Followed Tags</h3>
+              <span className="rounded-full bg-[#165d86]/10 px-3 py-1 text-xs font-semibold text-[#165d86]">
+                {profileData?.followedTags?.length || 0}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {profileData?.followedTags?.length > 0 ? (
+                profileData.followedTags.map((tag: any) => (
+                  <div
+                    key={tag.id}
+                    className="group flex items-center gap-2 rounded-full border border-slate-200 bg-white/78 px-3 py-2 transition-all hover:border-[#165d86]/20 hover:bg-[#165d86]/6"
+                  >
+                    <Tag size={14} className="text-slate-400 group-hover:text-[#165d86]" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-[#165d86]">
+                      {tag.name}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm italic text-slate-500">No tags followed yet.</p>
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
-    </>
+    </div>
   );
 }

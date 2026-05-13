@@ -7,13 +7,18 @@ import {
   HelpCircle,
   Tag as TagIcon,
   FileText,
+  ImagePlus,
   Lightbulb,
   CheckCircle,
   AlertCircle,
   Eye,
   Send,
   Search,
-  X
+  Upload,
+  X,
+  Lock,
+  Sparkles,
+  BadgeDollarSign
 } from 'lucide-react';
 
 interface Tag {
@@ -22,14 +27,28 @@ interface Tag {
 }
 
 export default function AskQuestionPage() {
-  const [form, setForm] = useState({ title: '', content: '', tagIds: '' });
+  const [form, setForm] = useState({
+    title: '',
+    content: '',
+    previewContent: '',
+    premiumContent: false,
+  });
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<File[]>([]);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [tagSearch, setTagSearch] = useState('');
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-  const [errors, setErrors] = useState({ title: '', content: '', tags: '' });
+  const [errors, setErrors] = useState({
+    title: '',
+    content: '',
+    tags: '',
+    media: '',
+    previewContent: '',
+    premiumContent: '',
+  });
   const navigate = useNavigate();
   const { user } = useSelector((state: any) => state.auth);
 
@@ -45,8 +64,17 @@ export default function AskQuestionPage() {
     fetchTags();
   }, []);
 
+  useEffect(() => {
+    const previews = selectedMedia.map((file) => URL.createObjectURL(file));
+    setMediaPreviews(previews);
+
+    return () => {
+      previews.forEach((preview) => URL.revokeObjectURL(preview));
+    };
+  }, [selectedMedia]);
+
   const validateForm = () => {
-    const newErrors = { title: '', content: '', tags: '' };
+    const newErrors = { title: '', content: '', tags: '', media: '', previewContent: '', premiumContent: '' };
     let isValid = true;
 
     if (form.title.length < 10) {
@@ -61,6 +89,16 @@ export default function AskQuestionPage() {
       newErrors.tags = 'Please select at least one tag';
       isValid = false;
     }
+    if (form.premiumContent) {
+      if (!user?.premiumCreatorEnabled) {
+        newErrors.premiumContent = 'Enable creator subscriptions in your profile before posting premium content.';
+        isValid = false;
+      }
+      if (form.previewContent.trim().length < 20) {
+        newErrors.previewContent = 'Add a short preview so non-subscribers can see what the premium post is about.';
+        isValid = false;
+      }
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -74,11 +112,20 @@ export default function AskQuestionPage() {
     setLoading(true);
 
     try {
-      const { data } = await axiosInstance.post('/api/v1/questions', {
-        title: form.title,
-        content: form.content,
-        userId: user.id,
-        tagIds: selectedTags
+      const payload = new FormData();
+      payload.append('title', form.title);
+      payload.append('content', form.content);
+      payload.append('previewContent', form.premiumContent ? form.previewContent : form.content.slice(0, 220));
+      payload.append('premiumContent', String(form.premiumContent));
+      payload.append('accessType', form.premiumContent ? 'PREMIUM' : 'FREE');
+      payload.append('userId', String(user.id));
+      selectedTags.forEach((tagId) => payload.append('tagIds', String(tagId)));
+      selectedMedia.forEach((file) => payload.append('media', file));
+
+      const { data } = await axiosInstance.post('/api/v1/questions', payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       console.log('Question created:', data);
@@ -104,6 +151,24 @@ export default function AskQuestionPage() {
     setSelectedTags(selectedTags.filter(id => id !== tagId));
   };
 
+  const handleMediaChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+
+    if (imageFiles.length !== files.length) {
+      setErrors((prev) => ({ ...prev, media: 'Only image files are allowed.' }));
+    } else {
+      setErrors((prev) => ({ ...prev, media: '' }));
+    }
+
+    setSelectedMedia((prev) => [...prev, ...imageFiles]);
+    event.target.value = '';
+  };
+
+  const removeMedia = (indexToRemove: number) => {
+    setSelectedMedia((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const filteredTags = availableTags.filter(tag =>
     tag.name.toLowerCase().includes(tagSearch.toLowerCase()) &&
     !selectedTags.includes(tag.id)
@@ -113,6 +178,7 @@ export default function AskQuestionPage() {
 
   const titleCharCount = form.title.length;
   const contentCharCount = form.content.length;
+  const previewCharCount = form.previewContent.length;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
@@ -214,6 +280,112 @@ export default function AskQuestionPage() {
                 )}
               </div>
 
+              <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                      <Lock size={16} className="text-amber-700" />
+                      Premium subscriber-only content
+                    </label>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Turn this on to make the full post visible only to people who subscribe to your content.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!user?.premiumCreatorEnabled) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          premiumContent: 'Enable creator subscriptions in your profile before posting premium content.',
+                        }));
+                        return;
+                      }
+
+                      setForm((prev) => ({
+                        ...prev,
+                        premiumContent: !prev.premiumContent,
+                        previewContent: prev.previewContent || prev.content.slice(0, 220),
+                      }));
+                      setErrors((prev) => ({ ...prev, premiumContent: '', previewContent: '' }));
+                    }}
+                    className={`inline-flex h-11 min-w-[110px] items-center justify-center rounded-full px-4 text-sm font-semibold transition-all ${
+                      form.premiumContent
+                        ? 'bg-slate-900 text-white shadow-md'
+                        : 'border border-slate-300 bg-white text-slate-700'
+                    }`}
+                  >
+                    {form.premiumContent ? 'Premium on' : 'Premium off'}
+                  </button>
+                </div>
+
+                <div className="mt-4 grid gap-4 rounded-2xl border border-white/80 bg-white/80 p-4 md:grid-cols-[1.2fr_0.8fr]">
+                  <div className="rounded-2xl bg-slate-900 px-4 py-4 text-white">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-300">
+                      <Sparkles size={16} />
+                      Creator subscription status
+                    </div>
+                    <p className="mt-3 text-lg font-semibold">
+                      {user?.premiumCreatorEnabled ? 'Enabled' : 'Not enabled yet'}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-300">
+                      {user?.premiumCreatorEnabled
+                        ? `Subscribers will unlock your full post for ${user.subscriptionCurrency || 'USD'} ${user.subscriptionPrice || '9.99'} per month.`
+                        : 'Enable subscriptions from your profile edit page before publishing premium posts.'}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                      <BadgeDollarSign size={16} className="text-[#07528f]" />
+                      Reader experience
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                      Non-subscribers will only see your preview text. Subscribers and you will see the full post.
+                    </p>
+                  </div>
+                </div>
+
+                {errors.premiumContent ? (
+                  <p className="mt-3 flex items-center gap-1 text-sm text-red-600">
+                    <AlertCircle size={14} /> {errors.premiumContent}
+                  </p>
+                ) : null}
+
+                {form.premiumContent ? (
+                  <div className="mt-4">
+                    <label className="mb-2 flex items-center justify-between text-sm font-semibold text-gray-700">
+                      <span className="flex items-center gap-2">
+                        <Eye size={16} className="text-[#07528f]" />
+                        Preview for non-subscribers
+                      </span>
+                      <span className={`text-xs font-medium ${previewCharCount < 20 ? 'text-gray-400' : 'text-green-600'}`}>
+                        {previewCharCount} characters
+                      </span>
+                    </label>
+                    <textarea
+                      placeholder="Write a short teaser that shows the value of the premium post without giving away the full answer."
+                      value={form.previewContent}
+                      onChange={(e) => {
+                        setForm((prev) => ({ ...prev, previewContent: e.target.value }));
+                        setErrors((prev) => ({ ...prev, previewContent: '' }));
+                      }}
+                      rows={5}
+                      className={`w-full rounded-2xl border px-4 py-3 focus:outline-none focus:ring-2 transition-all resize-none ${
+                        errors.previewContent
+                          ? 'border-red-300 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-[#07528f]'
+                      }`}
+                    />
+                    {errors.previewContent ? (
+                      <p className="mt-2 flex items-center gap-1 text-sm text-red-600">
+                        <AlertCircle size={14} /> {errors.previewContent}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
               {/* Tag Selection */}
               <div className="mb-8">
                 <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
@@ -291,6 +463,72 @@ export default function AskQuestionPage() {
                   <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                     <AlertCircle size={14} /> {errors.tags}
                   </p>
+                )}
+              </div>
+
+              <div className="mb-8">
+                <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <ImagePlus size={16} className="text-[#07528f]" />
+                  Upload Images
+                </label>
+
+                <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 py-6 text-center transition-all hover:border-[#07528f] hover:bg-[#07528f]/5">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#07528f] shadow-sm">
+                    <Upload size={20} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800">Choose one or more images</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    The first uploaded image will be used as the question thumbnail in the feed.
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleMediaChange}
+                    className="hidden"
+                  />
+                </label>
+
+                {errors.media && (
+                  <p className="mt-2 flex items-center gap-1 text-sm text-red-600">
+                    <AlertCircle size={14} /> {errors.media}
+                  </p>
+                )}
+
+                {selectedMedia.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gray-800">
+                        Selected images ({selectedMedia.length})
+                      </p>
+                      <p className="text-xs text-gray-500">Image 1 will be the thumbnail</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                      {mediaPreviews.map((preview, index) => (
+                        <div
+                          key={`${selectedMedia[index]?.name ?? 'preview'}-${index}`}
+                          className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white"
+                        >
+                          <img
+                            src={preview}
+                            alt={`Upload preview ${index + 1}`}
+                            className="h-32 w-full object-cover"
+                          />
+                          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-xs text-white">
+                            <span>{index === 0 ? 'Thumbnail' : `Image ${index + 1}`}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeMedia(index)}
+                              className="rounded-full bg-white/20 p-1 transition-colors hover:bg-white/30"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 

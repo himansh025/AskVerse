@@ -3,7 +3,17 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../features/auth/authSlice.ts';
 import { useDispatch, useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
-import { Menu, X, LogOut } from 'lucide-react';
+import {
+  ArrowRight,
+  CircleHelp,
+  House,
+  LogOut,
+  Menu,
+
+  Tags,
+  UserRound,
+  X,
+} from 'lucide-react';
 
 export default function Navbar() {
   const { user } = useSelector((state: any) => state.auth);
@@ -32,121 +42,217 @@ export default function Navbar() {
     navigate('/login');
   };
 
+  const navigationItems = [
+    { to: '/', label: 'Home', icon: House },
+    ...(user ? [
+      { to: '/ask', label: 'Ask', icon: CircleHelp },
+      { to: '/tags', label: 'Tags', icon: Tags },
+      { to: '/profile', label: 'Profile', icon: UserRound },
+    ] : []),
+  ];
+
   const isActive = (path: string) => {
-    return location.pathname === path ? 'text-white bg-white/10' : 'text-blue-100 hover:text-white hover:bg-white/5';
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+
+    return location.pathname.startsWith(path);
   };
 
+  const avatarUrl = user?.profilePicture || (
+    user?.name
+      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=165d86&color=fff&size=128`
+      : ''
+  );
+
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#07528f] shadow-lg' : 'bg-[#07528f]'
-        }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              AskVerse
+    <nav className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-5 lg:px-6">
+      <div className="mx-auto max-w-[1600px]">
+        <div
+          className={`rounded-[28px] border transition-all duration-300 ${
+            scrolled
+              ? 'border-white/70 bg-white/82 shadow-[0_28px_70px_rgba(21,35,58,0.18)] backdrop-blur-2xl'
+              : 'border-white/60 bg-white/74 shadow-[0_22px_60px_rgba(21,35,58,0.14)] backdrop-blur-xl'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            <Link to="/" className="flex min-w-0 items-center gap-3">
+              <div className=" flex h-fit w-16  items-center justify-center  overflow-hidden">
+                <img src="/askverse.logo.png" alt="AskVerse logo" className="h-full w-full object-contain rounded  "  />
+              </div>
+              <div className="min-w-0">
+                {/* <p className="font-brand text-xl font-bold text-slate-900">AskVerse</p> */}
+                <p className="hidden text-xs font-medium text-slate-500 sm:block">
+                  Ask better. Learn in public.
+                </p>
+              </div>
             </Link>
-          </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:block">
-            <div className="ml-10  flex items-baseline space-x-4">
-              {/* <Link to="/login" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/login')}`}>Login</Link>                               */}
-              {user && (
-                <>
-                  <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')}`}>Home</Link>
-                  <Link to="/ask" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/ask')}`}>Ask</Link>
-                  <Link to="/tags" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/tags')}`}>Tags</Link>
-                </>
-              )}
+            <div className="hidden items-center gap-2 md:flex">
+              {
+              user && navigationItems.map(({ to, label, icon: Icon }) => {
+                const active = isActive(to);
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                      active
+                        ? 'border-[rgba(22,93,134,0.18)] bg-[rgba(22,93,134,0.10)] text-[var(--color-brand)] shadow-[0_14px_30px_rgba(22,93,134,0.10)]'
+                        : 'border-transparent text-slate-600 hover:border-white/70 hover:bg-white hover:text-slate-900'
+                    }`}
+                  >
+                    <Icon size={16} className={active ? 'text-[var(--color-brand)]' : ''} />
+                    {label}
+                    {/* {active ? <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" /> : null} */}
+                  </Link>
+                );
+              })}
             </div>
-          </div>
 
-          {/* User Profile / Auth (Desktop) */}
-          <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6 gap-4">
+            <div className="hidden items-center gap-3 md:flex">
               {user ? (
                 <>
-                  <Link
-                    to="/profile"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors ${isActive('/profile')}`}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border border-white/30">
+                  <div className="relative group flex gap-2 items-center justify-center">
+                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 cursor-pointer">
                       <img
-                        src={`https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`}
+                        src={avatarUrl}
                         alt={user.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <span className="max-w-[100px] truncate">{user.name}</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="text-blue-200 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
-                    title="Logout"
-                  >
-                    <LogOut size={20} />
-                  </button>
+                    <span className="max-w-[120px] truncate cursor-pointer text-sm text-slate-900 font-medium mt-1">{user.name}</span>
+                    
+                    {/* Logout button dropdown - appears on hover */}
+                    <button
+                      onClick={handleLogout}
+                      className="absolute top-full hover:text-red-600 left-1/2 transform -translate-x-1/2 mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 shadow-[0_12px_28px_rgba(21,35,58,0.12)] whitespace-nowrap flex items-center gap-2"
+                    >
+                      {/* <LogOut size={16} /> */}
+                      Logout
+                    </button>
+                  </div>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  {/* <Link
+                    to="/login"
+                    className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900"
+                  >
+                    Log in
+                  </Link> */}
+                  {/* <Link
+                    to="/signup"
+                    className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(21,35,58,0.18)] transition-all hover:-translate-y-0.5 hover:bg-slate-800"
+                  >
+                    Join AskVerse
+                    <ArrowRight size={16} />
+                  </Link> */}
+                </>
+              )}
             </div>
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="-mr-2 flex md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-blue-200 hover:text-white hover:bg-white/10 focus:outline-none transition-colors"
-            >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            <div className="flex md:hidden">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="inline-flex items-center justify-center rounded-full border border-white/70 bg-white/72 p-2.5 text-slate-700 transition-all hover:bg-white"
+                aria-label="Toggle menu"
+              >
+                {isOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
+        className={`fixed inset-0 z-40 bg-slate-950/16 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         onClick={() => setIsOpen(false)}
       />
 
-      {/* Mobile Menu Panel */}
       <div
-        className={`absolute top-16 left-0 w-full bg-[#07528f] shadow-xl z-50 md:hidden transform transition-transform duration-300 origin-top ${isOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'
-          }`}
+        className={`absolute inset-x-3 top-[5.2rem] z-50 rounded-[28px] border border-white/70 bg-white/92 p-4 shadow-[0_24px_70px_rgba(21,35,58,0.18)] backdrop-blur-2xl transition-all duration-300 md:hidden ${
+          isOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
+        }`}
       >
-        <div className="px-2 pt-2 pb-3 space-y-1 flex text-end flex-col  sm:px-3 border-t border-white/10">
-          {user && user.name ? (
+        <div className="flex flex-col gap-2">
+          {user ? (
             <>
-              <Link to="/" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/')}`}>Home</Link>
-              <Link to="/ask" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/ask')}`}>Ask</Link>
-              <Link to="/tags" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/tags')}`}>Tags</Link>
-              <Link to="/profile" className="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-white/10">Profile</Link>
+              <div className="mb-2 flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3">
+                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                  <img src={avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-slate-900">{user.name}</p>
+                  <p className="text-sm text-slate-500">Ready to share a new question?</p>
+                </div>
+              </div>
+              {navigationItems.map(({ to, label, icon: Icon }) => {
+                const active = isActive(to);
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={`inline-flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition-all ${
+                      active
+                        ? 'border border-[rgba(22,93,134,0.18)] bg-[rgba(22,93,134,0.10)] text-[var(--color-brand)]'
+                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-3">
+                      <Icon size={18} />
+                      {label}
+                    </span>
+                    {active ? <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" /> : <ArrowRight size={16} />}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => navigate('/ask')}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(179,78,104,0.24)]"
+              >
+                Ask a question
+                <ArrowRight size={16} />
+              </button>
               <button
                 onClick={handleLogout}
-                className="flex justify-end  text-left block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-white/10"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600"
               >
+                <LogOut size={16} />
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/login')}`}>Login</Link>
-              <Link to="/singup" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/signup')}`}>Singup</Link>
+              <Link
+                to="/"
+                className={`inline-flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold ${
+                  isActive('/') ? 'border border-[rgba(22,93,134,0.18)] bg-[rgba(22,93,134,0.10)] text-[var(--color-brand)]' : 'bg-slate-50 text-slate-700'
+                }`}
+              >
+                <span className="inline-flex items-center gap-3">
+                  <House size={18} />
+                  Home
+                </span>
+                {isActive('/') ? <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" /> : <ArrowRight size={16} />}
+              </Link>
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+              >
+                Join AskVerse
+                <ArrowRight size={16} />
+              </Link>
             </>
           )}
-          {user ? (
-            <div className="pt-4 pb-3 border-t border-white/10">
-              <div className="flex items-center px-5 mb-3">
-              </div>
-              <div className="space-y-1 px-2">
-
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
     </nav>

@@ -6,7 +6,7 @@ interface CardProps {
 
 export default function Card({ children, className = '' }: CardProps) {
   return (
-    <div className={`bg-white shadow-xl rounded-2xl p-6 ${className}`}>
+    <div className={`shell-surface card-hover rounded-[28px] p-6 ${className}`}>
       {children}
     </div>
   );

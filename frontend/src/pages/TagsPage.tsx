@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Check } from 'lucide-react';
+import { Check, Hash, Plus, Search, Sparkles } from 'lucide-react';
 import axiosInstance from '../config/api.ts';
 import Button from '../components/Button.tsx';
-// import Card from '../components/Card.tsx'; // No longer used
 import Loader from '../components/Loader.tsx';
 import AddTagModal from '../features/tags/AddTagModal.tsx';
 import { useSelector } from 'react-redux';
@@ -11,7 +10,7 @@ import { useSelector } from 'react-redux';
 interface Tag {
   id: number;
   name: string;
-  description?: string; // short 2‑3 line description
+  description?: string;
   followerCount?: number;
   questionCount?: number;
 }
@@ -25,7 +24,6 @@ export default function TagsPage() {
   const [isAddTagModalOpen, setIsAddTagModalOpen] = useState(false);
   const { user } = useSelector((state: any) => state.auth);
 
-  // Fetch all tags
   const fetchTags = async () => {
     setLoading(true);
     try {
@@ -39,14 +37,15 @@ export default function TagsPage() {
     }
   };
 
-  // Fetch user's followed tags
   const fetchFollowedTags = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      return;
+    }
+
     try {
       const res = await axiosInstance.get(`/api/v1/users/${user.id}/followedTags`);
       const followedTags: Tag[] = res.data.data || res.data;
-      const followedIds = new Set(followedTags.map(tag => tag.id));
-      setFollowedTagIds(followedIds);
+      setFollowedTagIds(new Set(followedTags.map((tag) => tag.id)));
     } catch (error) {
       console.error('Failed to load followed tags:', error);
     }
@@ -54,154 +53,231 @@ export default function TagsPage() {
 
   useEffect(() => {
     fetchTags();
-    fetchFollowedTags();
   }, []);
 
-  // Follow a tag
+  useEffect(() => {
+    fetchFollowedTags();
+  }, [user?.id]);
+
   const handleFollow = async (tagId: number) => {
-    if (!user?.id) return;
-    setFollowing(prev => ({ ...prev, [tagId]: true }));
+    if (!user?.id) {
+      return;
+    }
+
+    setFollowing((prev) => ({ ...prev, [tagId]: true }));
     try {
       await axiosInstance.post(`/api/v1/users/${user.id}/followTag/${tagId}`);
-      setFollowedTagIds(prev => new Set(prev).add(tagId));
-      // Refresh tags to update follower count
+      setFollowedTagIds((prev) => new Set(prev).add(tagId));
       fetchTags();
-    } catch (err) {
-      console.error('Failed to follow tag:', err);
+    } catch (error) {
+      console.error('Failed to follow tag:', error);
       alert('Could not follow tag. Please try again.');
     } finally {
-      setFollowing(prev => ({ ...prev, [tagId]: false }));
+      setFollowing((prev) => ({ ...prev, [tagId]: false }));
     }
   };
 
-  // Unfollow a tag
   const handleUnfollow = async (tagId: number) => {
-    if (!user?.id) return;
-    setFollowing(prev => ({ ...prev, [tagId]: true }));
+    if (!user?.id) {
+      return;
+    }
+
+    setFollowing((prev) => ({ ...prev, [tagId]: true }));
     try {
       await axiosInstance.delete(`/api/v1/users/${user.id}/unfollowTag/${tagId}`);
-      setFollowedTagIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(tagId);
-        return newSet;
+      setFollowedTagIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tagId);
+        return next;
       });
-      // Refresh tags to update follower count
       fetchTags();
-    } catch (err) {
-      console.error('Failed to unfollow tag:', err);
+    } catch (error) {
+      console.error('Failed to unfollow tag:', error);
       alert('Could not unfollow tag. Please try again.');
     } finally {
-      setFollowing(prev => ({ ...prev, [tagId]: false }));
+      setFollowing((prev) => ({ ...prev, [tagId]: false }));
     }
   };
 
-  const filteredTags = useMemo(() => {
-    return tags.filter(tag => tag.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [tags, searchQuery]);
+  const filteredTags = useMemo(
+    () => tags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.toLowerCase())),
+    [tags, searchQuery],
+  );
 
   const handleTagAdded = (newTag: Tag) => {
-    setTags(prev => [newTag, ...prev]);
+    setTags((prev) => [newTag, ...prev]);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Loader />
       </div>
     );
   }
 
   return (
-    <div className="w-full mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-4xl font-bold  mb-2" style={{ color: '#07528f' }}>Explore Tags</h1>
-          <p className="text-gray-600">Discover and follow topics that interest you</p>
-        </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          {/* Search */}
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search tags..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-            />
-          </div>
-          <Button
-            onClick={() => setIsAddTagModalOpen(true)}
-            className="flex items-center space-x-2 hover:from-purple-700 hover:to-pink-700 shadow-lg whitespace-nowrap"
-            style={{ backgroundColor: '#8f0752' }}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Add Tag</span>
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-8">
+      <section className="shell-surface relative overflow-hidden rounded-[32px] px-6 py-8 sm:px-8 lg:px-10 xl:px-12">
+        <div className="absolute -left-12 top-8 h-40 w-40 rounded-full bg-[var(--color-brand)]/10 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-[var(--color-accent)]/10 blur-3xl" />
 
-      {filteredTags.length === 0 ? (
-        <div className="text-center py-20 glass rounded-2xl">
-          <div className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center float-animation" style={{ backgroundColor: '#8f0752' }}>
-            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-            </svg>
-          </div>
-          <p className="text-gray-600 text-lg mb-4">
-            {searchQuery ? `No tags found matching "${searchQuery}"` : 'No tags found. Create the first one!'}
-          </p>
-        </div>
-      ) : (
-        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
-          {filteredTags.map(tag => (
-            <div key={tag.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col justify-between mb-4 break-inside-avoid">
-              <div className="flex items-center justify-between">
-                <Link to={`/tags/${tag.id}`} className="group">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors cursor-pointer">#{tag.name}</h3>
-                </Link>
-                {(tag.followerCount && tag.followerCount > 100) || (tag.questionCount && tag.questionCount > 50) ? (
-                  <span className="bg-gradient-to-r from-pink-500 to-yellow-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">Trending</span>
-                ) : null}
+        <div className="relative grid gap-8 xl:grid-cols-[1.2fr_0.95fr] xl:items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-600">
+              <Sparkles size={16} className="text-[var(--color-accent)]" />
+              Curate the topics your community grows around
+            </div>
+
+            <h1 className="font-brand mt-5 text-4xl font-bold leading-tight text-slate-900 sm:text-5xl">
+              Explore Tags
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              Discover the conversations people are following, jump into focused question threads, and create a tag when a new topic needs a home.
+            </p>
+
+            <div className="mt-7 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-[0_18px_42px_rgba(21,35,58,0.08)]">
+                <p className="text-sm font-semibold text-slate-500">Available tags</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{tags.length}</p>
               </div>
-              {tag.description && (
-                <p className="text-sm text-gray-600 mb-2 line-clamp-3">{tag.description}</p>
-              )}
-              <Link to={`/tags/${tag.id}`} className="text-sm text-gray-500 mb-2 hover:text-purple-600 transition-colors">
-                {tag.questionCount ?? 0} question{tag.questionCount !== 1 ? 's' : ''} • {tag.followerCount ?? 0} follower{tag.followerCount !== 1 ? 's' : ''}
-              </Link>
+              <div className="rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-[0_18px_42px_rgba(21,35,58,0.08)]">
+                <p className="text-sm font-semibold text-slate-500">Following</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{followedTagIds.size}</p>
+              </div>
+              <div className="rounded-[24px] border border-white/70 bg-slate-900 p-5 text-white shadow-[0_18px_42px_rgba(21,35,58,0.16)]">
+                <p className="text-sm font-semibold text-slate-300">Showing now</p>
+                <p className="mt-2 text-3xl font-bold">{filteredTags.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/70 bg-white/78 p-4 shadow-[0_18px_42px_rgba(21,35,58,0.08)] backdrop-blur-xl">
+            <div className="flex flex-col gap-4 lg:flex-row">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search tags..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-full border border-slate-200 bg-white px-12 py-3.5 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-soft)]/80"
+                />
+              </div>
+
               <Button
-                onClick={() => followedTagIds.has(tag.id) ? handleUnfollow(tag.id) : handleFollow(tag.id)}
-                disabled={following[tag.id]}
-                size="small"
-                className={`w-full ${following[tag.id] ? 'opacity-70 cursor-not-allowed' : ''} text-white flex items-center justify-center`}
-                style={{ backgroundColor: followedTagIds.has(tag.id) ? '#6b7280' : '#8f0752' }}
+                onClick={() => setIsAddTagModalOpen(true)}
+                size="large"
+                className="justify-center whitespace-nowrap"
               >
-                {following[tag.id] ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    {followedTagIds.has(tag.id) ? 'Unfollowing...' : 'Following...'}
-                  </span>
-                ) : followedTagIds.has(tag.id) ? (
-                  <span className="flex items-center gap-2">
-                    <Check size={14} /> Unfollow
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                    Follow
-                  </span>
-                )}
+                <Plus size={18} />
+                Add Tag
               </Button>
             </div>
-          ))}
+
+            <p className="mt-4 px-2 text-sm text-slate-500">
+              Search by topic name or create a new tag if the right one does not exist yet.
+            </p>
+          </div>
         </div>
+      </section>
+
+      {filteredTags.length === 0 ? (
+        <div className="glass rounded-[32px] px-6 py-16 text-center sm:px-10">
+          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)]">
+            <Hash size={40} />
+          </div>
+          <h2 className="font-brand text-3xl font-bold text-slate-900">
+            {searchQuery ? 'No matching tags yet' : 'No tags created yet'}
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-slate-600">
+            {searchQuery
+              ? `We could not find any tag matching "${searchQuery}".`
+              : 'Start the first topic and give people a place to ask and follow questions.'}
+          </p>
+          <div className="mt-6">
+            <Button onClick={() => setIsAddTagModalOpen(true)}>
+              <Plus size={18} />
+              Create Tag
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <section className="space-y-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-brand text-2xl font-bold text-slate-900">Popular topics</h2>
+              <p className="text-slate-600">Follow tags to tailor the questions and discussions you see next.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {filteredTags.map((tag) => {
+              const isFollowed = followedTagIds.has(tag.id);
+              const isBusy = following[tag.id];
+              const isTrending = (tag.followerCount || 0) > 100 || (tag.questionCount || 0) > 50;
+
+              return (
+                <div
+                  key={tag.id}
+                  className="shell-surface rounded-[28px] p-5 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(21,35,58,0.16)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-brand-soft)] text-[var(--color-brand)]">
+                      <Hash size={20} />
+                    </div>
+                    {isTrending ? (
+                      <span className="rounded-full border border-amber-200/60 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                        Trending
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <Link to={`/tags/${tag.id}`} className="mt-5 block">
+                    <h3 className="text-2xl font-bold tracking-[-0.03em] text-slate-900 transition-colors hover:text-[var(--color-brand)]">
+                      #{tag.name}
+                    </h3>
+                  </Link>
+
+                  <p className="mt-3 min-h-[48px] text-sm leading-6 text-slate-600">
+                    {tag.description || `Track questions, answers, and conversations related to ${tag.name}.`}
+                  </p>
+
+                  <div className="mt-5 flex items-center gap-2 text-sm text-slate-500">
+                    <span>{tag.questionCount ?? 0} question{tag.questionCount !== 1 ? 's' : ''}</span>
+                    <span>•</span>
+                    <span>{tag.followerCount ?? 0} follower{tag.followerCount !== 1 ? 's' : ''}</span>
+                  </div>
+
+                  <div className="mt-5">
+                    <Button
+                      onClick={() => (isFollowed ? handleUnfollow(tag.id) : handleFollow(tag.id))}
+                      disabled={isBusy}
+                      variant={isFollowed ? 'secondary' : 'primary'}
+                      className={`w-full justify-center ${isFollowed ? 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200' : ''}`}
+                    >
+                      {isBusy ? (
+                        isFollowed ? 'Updating...' : 'Following...'
+                      ) : isFollowed ? (
+                        <>
+                          <Check size={16} />
+                          Unfollow
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={16} />
+                          Follow
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      {/* Add Tag Modal */}
       <AddTagModal
         isOpen={isAddTagModalOpen}
         onClose={() => setIsAddTagModalOpen(false)}
