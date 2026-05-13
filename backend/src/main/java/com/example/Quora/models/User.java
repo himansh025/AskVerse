@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,6 +52,15 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    private Boolean premiumCreatorEnabled = Boolean.FALSE;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal subscriptionPrice;
+
+    @Column(length = 10)
+    private String subscriptionCurrency = "USD";
 
     @CreationTimestamp
     @Column(updatable = false)

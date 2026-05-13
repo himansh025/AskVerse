@@ -3,6 +3,7 @@ package com.example.Quora.dtos;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -14,4 +15,5 @@ public class AnswerResponseDto {
     private UserBasicDto user;
     private int commentCount;
     private int likeCount;
+    private LocalDateTime createdAt;
 }

@@ -3,6 +3,7 @@ package com.example.Quora.services;
 import com.example.Quora.dtos.UserDto;
 import com.example.Quora.dtos.UserResponseDto;
 import com.example.Quora.dtos.UserProfileDto;
+import com.example.Quora.dtos.UserProfileUpdateRequestDto;
 import com.example.Quora.dtos.QuestionResponseDto;
 import com.example.Quora.dtos.AnswerResponseDto;
 import com.example.Quora.dtos.CommentResponseDto;
@@ -19,6 +20,8 @@ import com.example.Quora.services.CommentService;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,6 +56,12 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
+    @Autowired
+    private SubscriptionService subscriptionService;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -99,6 +108,9 @@ public class UserService {
         user.setWebsite(null);
         user.setGender(null);
         user.setDob(null);
+        user.setPremiumCreatorEnabled(Boolean.FALSE);
+        user.setSubscriptionPrice(BigDecimal.valueOf(9.99));
+        user.setSubscriptionCurrency("USD");
 
         return userRepository.save(user);
     }
@@ -124,6 +136,10 @@ public class UserService {
                 .website(user.getWebsite())
                 .gender(user.getGender())
                 .dob(user.getDob())
+                .premiumCreatorEnabled(user.getPremiumCreatorEnabled())
+                .subscriptionPrice(subscriptionService.resolveSubscriptionPrice(user))
+                .subscriptionCurrency(subscriptionService.resolveSubscriptionCurrency(user))
+                .activeSubscriberCount(subscriptionService.countActiveSubscribers(user.getId()))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
@@ -137,7 +153,7 @@ public class UserService {
         List<QuestionResponseDto> questions = questionRepository.findAll()
                 .stream()
                 .filter(q -> q.getUser() != null && q.getUser().getId().equals(userId))
-                .map(questionService::mapToDto)
+                .map(question -> questionService.mapToDto(question, userId))
                 .collect(Collectors.toList());
 
         // Get user's answers
@@ -171,6 +187,10 @@ public class UserService {
                 .website(user.getWebsite())
                 .gender(user.getGender())
                 .dob(user.getDob())
+                .premiumCreatorEnabled(user.getPremiumCreatorEnabled())
+                .subscriptionPrice(subscriptionService.resolveSubscriptionPrice(user))
+                .subscriptionCurrency(subscriptionService.resolveSubscriptionCurrency(user))
+                .activeSubscriberCount(subscriptionService.countActiveSubscribers(userId))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .questions(questions)
@@ -205,6 +225,44 @@ public class UserService {
             user.setProfilePicture(profileDto.getProfilePicture());
         if (profileDto.getCoverPicture() != null)
             user.setCoverPicture(profileDto.getCoverPicture());
+        if (profileDto.getPremiumCreatorEnabled() != null)
+            user.setPremiumCreatorEnabled(profileDto.getPremiumCreatorEnabled());
+        if (profileDto.getSubscriptionPrice() != null)
+            user.setSubscriptionPrice(profileDto.getSubscriptionPrice());
+        if (profileDto.getSubscriptionCurrency() != null)
+            user.setSubscriptionCurrency(profileDto.getSubscriptionCurrency());
+
+        return userRepository.save(user);
+    }
+
+    public User updateUserProfile(Long userId, UserProfileUpdateRequestDto profileDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (profileDto.getName() != null)
+            user.setName(profileDto.getName());
+        if (profileDto.getBio() != null)
+            user.setBio(profileDto.getBio());
+        if (profileDto.getLocation() != null)
+            user.setLocation(profileDto.getLocation());
+        if (profileDto.getWebsite() != null)
+            user.setWebsite(profileDto.getWebsite());
+        if (profileDto.getGender() != null)
+            user.setGender(profileDto.getGender());
+        if (profileDto.getDob() != null && !profileDto.getDob().isBlank())
+            user.setDob(LocalDate.parse(profileDto.getDob()));
+        if (profileDto.getCoverPicture() != null)
+            user.setCoverPicture(profileDto.getCoverPicture());
+        if (profileDto.getPremiumCreatorEnabled() != null)
+            user.setPremiumCreatorEnabled(profileDto.getPremiumCreatorEnabled());
+        if (profileDto.getSubscriptionPrice() != null && !profileDto.getSubscriptionPrice().isBlank())
+            user.setSubscriptionPrice(new BigDecimal(profileDto.getSubscriptionPrice()));
+        if (profileDto.getSubscriptionCurrency() != null && !profileDto.getSubscriptionCurrency().isBlank())
+            user.setSubscriptionCurrency(profileDto.getSubscriptionCurrency().trim().toUpperCase());
+        if (profileDto.getProfileImage() != null && !profileDto.getProfileImage().isEmpty())
+            user.setProfilePicture(cloudinaryService.uploadProfileImage(profileDto.getProfileImage()));
+        if (profileDto.getCoverImage() != null && !profileDto.getCoverImage().isEmpty())
+            user.setCoverPicture(cloudinaryService.uploadProfileImage(profileDto.getCoverImage()));
 
         return userRepository.save(user);
     }

@@ -2,6 +2,7 @@ package com.example.Quora.dtos;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.example.Quora.models.Tag;
@@ -38,6 +39,14 @@ public class UserProfileDto {
     private String gender;
 
     private LocalDate dob;
+
+    private Boolean premiumCreatorEnabled;
+
+    private BigDecimal subscriptionPrice;
+
+    private String subscriptionCurrency;
+
+    private Long activeSubscriberCount;
 
     private LocalDateTime createdAt;
 

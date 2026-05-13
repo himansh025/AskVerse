@@ -71,6 +71,7 @@ public class AnswerService {
                 answer.getQuestion() != null ? answer.getQuestion().getId() : null,
                 userDto,
                 answer.getComments() != null ? answer.getComments().size() : 0,
-                answer.getLikedBy() != null ? answer.getLikedBy().size() : 0);
+                answer.getLikedBy() != null ? answer.getLikedBy().size() : 0,
+                answer.getCreatedAt());
     }
 }

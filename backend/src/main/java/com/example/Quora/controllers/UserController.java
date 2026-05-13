@@ -4,6 +4,7 @@ import com.example.Quora.dtos.ApiResponse;
 import com.example.Quora.dtos.UserDto;
 import com.example.Quora.dtos.UserResponseDto;
 import com.example.Quora.dtos.UserProfileDto;
+import com.example.Quora.dtos.UserProfileUpdateRequestDto;
 import com.example.Quora.exceptions.ResourceNotFoundException;
 import com.example.Quora.models.User;
 import com.example.Quora.services.UserService;
@@ -11,6 +12,7 @@ import com.example.Quora.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -145,6 +147,15 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponseDto>> updateProfile(
             @PathVariable("userId") Long userId,
             @RequestBody UserProfileDto profileDto) {
+        User updatedUser = userService.updateUserProfile(userId, profileDto);
+        UserResponseDto userResponse = userService.mapToUserResponseDto(updatedUser);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", userResponse));
+    }
+
+    @PutMapping(value = "/profile/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<UserResponseDto>> updateProfileWithImage(
+            @PathVariable("userId") Long userId,
+            @ModelAttribute UserProfileUpdateRequestDto profileDto) {
         User updatedUser = userService.updateUserProfile(userId, profileDto);
         UserResponseDto userResponse = userService.mapToUserResponseDto(updatedUser);
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", userResponse));

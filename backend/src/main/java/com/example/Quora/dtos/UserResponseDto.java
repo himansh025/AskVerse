@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -24,6 +25,10 @@ public class UserResponseDto {
     private String website;
     private String gender;
     private LocalDate dob;
+    private Boolean premiumCreatorEnabled;
+    private BigDecimal subscriptionPrice;
+    private String subscriptionCurrency;
+    private Long activeSubscriberCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
