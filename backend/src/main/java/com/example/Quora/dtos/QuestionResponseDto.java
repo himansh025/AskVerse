@@ -28,6 +28,7 @@ public class QuestionResponseDto {
     private Boolean locked;
     private Boolean accessible;
     private Boolean subscribeToUnlock;
+    private Boolean isAnonymous;
     private java.math.BigDecimal subscriptionPrice;
     private String subscriptionCurrency;
     private LocalDateTime createdAt;

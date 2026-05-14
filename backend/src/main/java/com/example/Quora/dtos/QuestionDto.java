@@ -14,4 +14,5 @@ public class QuestionDto {
     private String accessType;
     private Long userId;
     private Set<Long> tagIds;
+    private Boolean isAnonymous = Boolean.FALSE;
 }

@@ -13,6 +13,7 @@ public class QuestionCreateRequestDto {
     private Boolean premiumContent;
     private String accessType;
     private Long userId;
+    private Boolean isAnonymous = Boolean.FALSE;
     private List<Long> tagIds;
     private List<MultipartFile> media;
 }

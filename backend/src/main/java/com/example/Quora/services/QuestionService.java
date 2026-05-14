@@ -108,6 +108,7 @@ public class QuestionService {
         question.setPreviewContent(resolvePreviewContent(dto));
         question.setPremiumContent(Boolean.TRUE.equals(dto.getPremiumContent()));
         question.setAccessType(resolveAccessType(dto));
+        question.setIsAnonymous(Boolean.TRUE.equals(dto.getIsAnonymous()));
         question.setUser(user);
         question.setTags(tags);
         question.setMediaUrls(cloudinaryService.uploadImages(mediaFiles));
@@ -134,13 +135,15 @@ public class QuestionService {
         boolean accessible = isQuestionAccessible(q, viewerId);
         boolean locked = Boolean.TRUE.equals(q.getPremiumContent()) && !accessible;
         User author = q.getUser();
+        boolean isAnonymous = Boolean.TRUE.equals(q.getIsAnonymous());
+        
         return QuestionResponseDto.builder()
                 .id(q.getId())
                 .title(q.getTitle())
                 .content(accessible ? q.getContent() : resolvePreviewFromQuestion(q))
                 .previewContent(resolvePreviewFromQuestion(q))
-                .authorId(author != null ? author.getId() : null)
-                .username(author != null ? author.getUsername() : null)
+                .authorId(isAnonymous ? null : (author != null ? author.getId() : null))
+                .username(isAnonymous ? "Anonymous User" : (author != null ? author.getUsername() : null))
                 .tags(
                         q.getTags() == null
                                 ? Set.of()
@@ -157,6 +160,7 @@ public class QuestionService {
                 .subscribeToUnlock(locked)
                 .subscriptionPrice(author != null ? subscriptionService.resolveSubscriptionPrice(author) : null)
                 .subscriptionCurrency(author != null ? subscriptionService.resolveSubscriptionCurrency(author) : null)
+                .isAnonymous(isAnonymous)
                 .createdAt(q.getCreatedAt())
                 .build();
     }

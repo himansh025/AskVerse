@@ -47,6 +47,9 @@ public class Question {
     private Boolean premiumContent = Boolean.FALSE;
 
     @Column(nullable = false)
+    private Boolean isAnonymous = Boolean.FALSE;
+
+    @Column(nullable = false)
     @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
     private ContentAccessType accessType = ContentAccessType.FREE;
 

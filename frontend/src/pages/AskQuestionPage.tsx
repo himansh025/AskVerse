@@ -32,6 +32,7 @@ export default function AskQuestionPage() {
     content: '',
     previewContent: '',
     premiumContent: false,
+    isAnonymous: false,
   });
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -48,6 +49,7 @@ export default function AskQuestionPage() {
     media: '',
     previewContent: '',
     premiumContent: '',
+    isAnonymous: '',
   });
   const navigate = useNavigate();
   const { user } = useSelector((state: any) => state.auth);
@@ -119,6 +121,7 @@ export default function AskQuestionPage() {
       payload.append('premiumContent', String(form.premiumContent));
       payload.append('accessType', form.premiumContent ? 'PREMIUM' : 'FREE');
       payload.append('userId', String(user.id));
+      payload.append('isAnonymous', String(form.isAnonymous));
       selectedTags.forEach((tagId) => payload.append('tagIds', String(tagId)));
       selectedMedia.forEach((file) => payload.append('media', file));
 
@@ -384,6 +387,38 @@ export default function AskQuestionPage() {
                     ) : null}
                   </div>
                 ) : null}
+              </div>
+
+              {/* Anonymous Posting Section */}
+              <div className="mb-8 rounded-2xl border border-blue-200 bg-blue-50/70 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                      <Eye size={16} className="text-blue-700" />
+                      Post anonymously
+                    </label>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Hide your identity when posting this question. Your name won't be displayed publicly, but the system will still know you posted it.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => ({
+                        ...prev,
+                        isAnonymous: !prev.isAnonymous,
+                      }));
+                      setErrors((prev) => ({ ...prev, isAnonymous: '' }));
+                    }}
+                    className={`inline-flex h-11 min-w-[110px] items-center justify-center rounded-full px-4 text-sm font-semibold transition-all ${
+                      form.isAnonymous
+                        ? 'bg-slate-900 text-white shadow-md'
+                        : 'border border-slate-300 bg-white text-slate-700'
+                    }`}
+                  >
+                    {form.isAnonymous ? 'Anonymous' : 'Not anon'}
+                  </button>
+                </div>
               </div>
 
               {/* Tag Selection */}
