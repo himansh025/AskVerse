@@ -89,6 +89,7 @@ public class UserController {
                 UserResponseDto userResponse = userService.getUserByEmail(authentication.getName())
                         .map(userService::mapToUserResponseDto)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                userResponse.setToken(jwtToken);
 
                 return ResponseEntity.ok(ApiResponse.success("Login successful", userResponse));
             } else {

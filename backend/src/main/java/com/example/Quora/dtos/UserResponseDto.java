@@ -32,4 +32,5 @@ public class UserResponseDto {
     private BigDecimal monthlySubscriptionIncome;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String token;
 }
