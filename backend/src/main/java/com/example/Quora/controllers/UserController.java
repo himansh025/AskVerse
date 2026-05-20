@@ -81,7 +81,7 @@ public class UserController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userDto.getEmail(), userDto.getPassword()));
 
-            if (authentication.isAuthenticated()) {
+            if (authentication != null && authentication.isAuthenticated()) {
                 String jwtToken = jwtUtil.createToken(userDto.getEmail());
                 ResponseCookie cookie = buildAuthCookie(jwtToken);
                 response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -108,6 +108,9 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserData(Authentication authentication) {
+        if (authentication == null) {
+            throw new UsernameNotFoundException("User not authenticated");
+        }
         String email = authentication.getName();
         System.out.println("email" + email);
         UserResponseDto user = userService.getUserByEmail(email)
