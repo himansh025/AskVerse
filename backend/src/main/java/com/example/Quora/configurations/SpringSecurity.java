@@ -26,19 +26,15 @@ import java.util.List;
 @EnableWebSecurity
 public class SpringSecurity {
     private final JwtFilter jwtFilter;
-    @Value("${app.cors.local-origins}")
-    private String localOrigins;
-    @Value("${app.cors.production-origins}")
-    private String prodOrigins;
 
     public SpringSecurity(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -76,30 +72,6 @@ public class SpringSecurity {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        java.util.List<String> allowedOrigins = new java.util.ArrayList<>();
-        if (localOrigins != null && !localOrigins.isBlank()) {
-            allowedOrigins.addAll(Arrays.asList(localOrigins.split(",")));
-        }
-        if (prodOrigins != null && !prodOrigins.isBlank()) {
-            allowedOrigins.addAll(Arrays.asList(prodOrigins.split(",")));
-        }
-        allowedOrigins.replaceAll(String::trim);
-        allowedOrigins.removeIf(String::isBlank);
-
-        config.setAllowedOrigins(allowedOrigins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 
 }
