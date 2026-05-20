@@ -1,8 +1,6 @@
 package com.example.Quora.configurations;
 
 import com.example.Quora.filters.JwtFilter;
-import com.example.Quora.services.UserDetailsServiceImp;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,22 +26,19 @@ import java.util.List;
 @EnableWebSecurity
 public class SpringSecurity {
     private final JwtFilter jwtFilter;
-    private final UserDetailsServiceImp userDetailsServiceImp;
     @Value("${app.cors.local-origins}")
     private String localOrigins;
     @Value("${app.cors.production-origins}")
     private String prodOrigins;
 
-    public SpringSecurity(JwtFilter jwtFilter, UserDetailsServiceImp userDetailsServiceImp) {
+    public SpringSecurity(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
-        this.userDetailsServiceImp = userDetailsServiceImp;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors().and()
-                // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -83,23 +78,28 @@ public class SpringSecurity {
         return new BCryptPasswordEncoder();
     }
 
-    // @Bean
-    // public CorsConfigurationSource corsConfigurationSource() {
-    // CorsConfiguration config = new CorsConfiguration();
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
 
-    // List<String> allowedOrigins = new java.util.ArrayList<>();
-    // allowedOrigins.addAll(Arrays.asList(localOrigins.split(",")));
-    // allowedOrigins.addAll(Arrays.asList(prodOrigins.split(",")));
+        java.util.List<String> allowedOrigins = new java.util.ArrayList<>();
+        if (localOrigins != null && !localOrigins.isBlank()) {
+            allowedOrigins.addAll(Arrays.asList(localOrigins.split(",")));
+        }
+        if (prodOrigins != null && !prodOrigins.isBlank()) {
+            allowedOrigins.addAll(Arrays.asList(prodOrigins.split(",")));
+        }
+        allowedOrigins.replaceAll(String::trim);
+        allowedOrigins.removeIf(String::isBlank);
 
-    // config.setAllowedOrigins(allowedOrigins);
-    // config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    // config.setAllowedHeaders(List.of("*"));
-    // config.setAllowCredentials(true);
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
 
-    // UrlBasedCorsConfigurationSource source = new
-    // UrlBasedCorsConfigurationSource();
-    // source.registerCorsConfiguration("/**", config);
-    // return source;
-    // }
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 
 }

@@ -108,8 +108,9 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserData(Authentication authentication) {
-        if (authentication == null) {
-            throw new UsernameNotFoundException("User not authenticated");
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User not authenticated"));
         }
         String email = authentication.getName();
         System.out.println("email" + email);
@@ -174,22 +175,34 @@ public class UserController {
     }
 
     private ResponseCookie buildAuthCookie(String jwtToken) {
-        return ResponseCookie.from(authCookieName, jwtToken)
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(authCookieName, jwtToken)
                 .httpOnly(true)
-                .secure(authCookieSecure)
                 .sameSite(authCookieSameSite)
                 .path("/")
-                .maxAge(expiryCookie)
-                .build();
+                .maxAge(expiryCookie);
+
+        if ("None".equalsIgnoreCase(authCookieSameSite)) {
+            builder.secure(true);
+        } else {
+            builder.secure(authCookieSecure);
+        }
+
+        return builder.build();
     }
 
     private ResponseCookie clearAuthCookie() {
-        return ResponseCookie.from(authCookieName, "")
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(authCookieName, "")
                 .httpOnly(true)
-                .secure(authCookieSecure)
                 .sameSite(authCookieSameSite)
                 .path("/")
-                .maxAge(0)
-                .build();
+                .maxAge(0);
+
+        if ("None".equalsIgnoreCase(authCookieSameSite)) {
+            builder.secure(true);
+        } else {
+            builder.secure(authCookieSecure);
+        }
+
+        return builder.build();
     }
 }
