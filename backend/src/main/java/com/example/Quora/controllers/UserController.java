@@ -10,6 +10,7 @@ import com.example.Quora.models.User;
 import com.example.Quora.services.UserService;
 import com.example.Quora.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,18 +18,23 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
     private int expiryCookie = 24 * 7 * 3600;
+    @Value("${app.auth.cookie-name:JwtToken}")
+    private String authCookieName;
+    @Value("${app.auth.cookie-secure:false}")
+    private boolean authCookieSecure;
+    @Value("${app.auth.cookie-same-site:Lax}")
+    private String authCookieSameSite;
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
@@ -69,7 +75,7 @@ public class UserController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<ApiResponse<Map<String, String>>> signInUser(@RequestBody UserDto userDto,
+    public ResponseEntity<ApiResponse<UserResponseDto>> signInUser(@RequestBody UserDto userDto,
             HttpServletResponse response) {
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -77,24 +83,27 @@ public class UserController {
 
             if (authentication.isAuthenticated()) {
                 String jwtToken = jwtUtil.createToken(userDto.getEmail());
-                ResponseCookie cookie = ResponseCookie.from("JwtToken", jwtToken)
-                        .httpOnly(true)
-                        .maxAge(expiryCookie)
-                        .secure(false)
-                        .build();
+                ResponseCookie cookie = buildAuthCookie(jwtToken);
                 response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-                Map<String, String> tokenData = new HashMap<>();
-                tokenData.put("token", jwtToken);
+                UserResponseDto userResponse = userService.getUserByEmail(authentication.getName())
+                        .map(userService::mapToUserResponseDto)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                return ResponseEntity.ok(ApiResponse.success("Login successful", tokenData));
+                return ResponseEntity.ok(ApiResponse.success("Login successful", userResponse));
             } else {
                 throw new UsernameNotFoundException("Authentication failed");
             }
-        } catch (Exception e) {
+        } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("Invalid credentials", e.getMessage()));
+                    .body(ApiResponse.error("Invalid email or password"));
         }
+    }
+
+    @PostMapping("/signout")
+    public ResponseEntity<ApiResponse<Void>> signOutUser(HttpServletResponse response) {
+        response.setHeader(HttpHeaders.SET_COOKIE, clearAuthCookie().toString());
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
     }
 
     @GetMapping("/me")
@@ -159,5 +168,25 @@ public class UserController {
         User updatedUser = userService.updateUserProfile(userId, profileDto);
         UserResponseDto userResponse = userService.mapToUserResponseDto(updatedUser);
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", userResponse));
+    }
+
+    private ResponseCookie buildAuthCookie(String jwtToken) {
+        return ResponseCookie.from(authCookieName, jwtToken)
+                .httpOnly(true)
+                .secure(authCookieSecure)
+                .sameSite(authCookieSameSite)
+                .path("/")
+                .maxAge(expiryCookie)
+                .build();
+    }
+
+    private ResponseCookie clearAuthCookie() {
+        return ResponseCookie.from(authCookieName, "")
+                .httpOnly(true)
+                .secure(authCookieSecure)
+                .sameSite(authCookieSameSite)
+                .path("/")
+                .maxAge(0)
+                .build();
     }
 }

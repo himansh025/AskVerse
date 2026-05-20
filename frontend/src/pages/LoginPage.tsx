@@ -7,6 +7,7 @@ import { login } from '../features/auth/authSlice.ts';
 import Button from '../components/Button.tsx';
 import Input from '../components/Input.tsx';
 import { ArrowRight, MessageSquare, ShieldCheck, Sparkles } from 'lucide-react';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -20,18 +21,13 @@ export default function LoginPage() {
 
     try {
       const { data } = await axiosInstance.post('/api/v1/users/signin', form);
-      // const userData = response.data;
-      // console.log("data",data);
-      const token: string = data?.data?.token ? data?.data?.token : " ";
-      localStorage.setItem('token', token);
-      dispatch(login({ user: null, token }))
-
-      // sessionStorage.setItem('token', userData?.token);
-      // toast.success('Login successful!');
+      const userData = data.data || data;
+      dispatch(login({ user: userData }));
+      showSuccessToast(getApiSuccessMessage(data, 'Login successful'));
       navigate('/');
     } catch (error: any) {
       console.error(error);
-      // toast.error(error.response?.data?.message || 'Invalid credentials!');
+      showErrorToast(getApiErrorMessage(error, 'Invalid credentials'));
     } finally {
       setLoading(false);
     }

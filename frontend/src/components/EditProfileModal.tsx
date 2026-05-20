@@ -4,6 +4,7 @@ import axiosInstance from '../config/api';
 import { useDispatch } from 'react-redux';
 import { setProfileData } from '../store/dataSlicer';
 import { updateUser } from '../features/auth/authSlice.ts';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 interface EditProfileModalProps {
     isOpen: boolean;
@@ -132,12 +133,12 @@ const EditProfileModal = ({ isOpen, onClose, profileData, userId }: EditProfileM
                 dispatch(updateUser(profileResponse.data.data));
 
                 // Show success message
-                alert('Profile updated successfully!');
+                showSuccessToast(getApiSuccessMessage(response.data, 'Profile updated successfully'));
                 onClose();
             }
         } catch (error: any) {
             console.error('Error updating profile:', error);
-            alert(error.response?.data?.message || 'Failed to update profile');
+            showErrorToast(getApiErrorMessage(error, 'Failed to update profile'));
         } finally {
             setLoading(false);
         }

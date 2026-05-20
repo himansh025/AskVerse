@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Hash, Sparkles, X } from 'lucide-react';
 import axiosInstance from '../../config/api.ts';
 import Button from '../../components/Button.tsx';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../../utils/notify.ts';
 
 interface AddTagModalProps {
   isOpen: boolean;
@@ -33,10 +34,13 @@ export default function AddTagModal({ isOpen, onClose, onTagAdded }: AddTagModal
       const newTag = response.data.data || response.data;
       setTagName('');
       onTagAdded(newTag);
+      showSuccessToast(getApiSuccessMessage(response.data, 'Tag created successfully'));
       onClose();
     } catch (error: any) {
       console.error('Failed to create tag:', error);
-      setError(error.response?.data?.message || 'Failed to create tag. Please try again.');
+      const message = getApiErrorMessage(error, 'Failed to create tag');
+      setError(message);
+      showErrorToast(message);
     } finally {
       setLoading(false);
     }

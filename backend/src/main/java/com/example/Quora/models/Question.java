@@ -82,6 +82,12 @@ public class Question {
     @EqualsAndHashCode.Exclude
     private Set<Answer> answers = new HashSet<>();
 
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Debate> debates = new HashSet<>();
+
     public List<String> getMediaUrls() {
         return mediaEntries.stream()
                 .map(QuestionMedia::getMediaUrl)

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BadgeDollarSign, Calendar, Camera, FileText, Globe, Image, Lock, MapPin, Upload, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Camera, FileText, Globe, Image, IndianRupee, Lock, MapPin, Upload, User } from 'lucide-react';
 import axiosInstance from '../config/api.ts';
 import Loader from '../components/Loader.tsx';
 import { setProfileData } from '../store/dataSlicer.ts';
 import { updateUser } from '../features/auth/authSlice.ts';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 export default function EditProfilePage() {
   const { user } = useSelector((state: any) => state.auth);
@@ -19,6 +20,7 @@ export default function EditProfilePage() {
   const [selectedCoverImage, setSelectedCoverImage] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState('');
   const [coverPreview, setCoverPreview] = useState('');
+  const subscriptionCurrencyLabel = 'INR - Indian Rupee';
   const [formData, setFormData] = useState({
     name: '',
     bio: '',
@@ -150,7 +152,7 @@ export default function EditProfilePage() {
       }
       payload.append('premiumCreatorEnabled', String(formData.premiumCreatorEnabled));
       payload.append('subscriptionPrice', formData.subscriptionPrice);
-      payload.append('subscriptionCurrency', 'USD');
+      payload.append('subscriptionCurrency', 'INR');
       if (selectedProfileImage) {
         payload.append('profileImage', selectedProfileImage);
       }
@@ -158,7 +160,7 @@ export default function EditProfilePage() {
         payload.append('coverImage', selectedCoverImage);
       }
 
-      await axiosInstance.put(`/api/v1/users/profile/${user.id}`, payload, {
+      const updateResponse = await axiosInstance.put(`/api/v1/users/profile/${user.id}`, payload, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -169,11 +171,11 @@ export default function EditProfilePage() {
       dispatch(setProfileData(updatedProfile));
       dispatch(updateUser(updatedProfile));
 
-      alert('Profile updated successfully!');
+      showSuccessToast(getApiSuccessMessage(updateResponse.data, 'Profile updated successfully'));
       navigate('/profile');
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert(error.response?.data?.message || 'Failed to update profile');
+      showErrorToast(getApiErrorMessage(error, 'Failed to update profile'));
     } finally {
       setLoading(false);
     }
@@ -433,7 +435,7 @@ export default function EditProfilePage() {
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <BadgeDollarSign size={18} className="text-[#07528f]" />
+                      <IndianRupee size={18} className="text-[#07528f]" />
                       Monthly subscription price
                     </label>
                     <input
@@ -454,7 +456,7 @@ export default function EditProfilePage() {
                       Billing currency
                     </label>
                     <div className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 font-medium">
-                      USD - US Dollar
+                      {subscriptionCurrencyLabel}
                     </div>
                   </div>
                 </div>

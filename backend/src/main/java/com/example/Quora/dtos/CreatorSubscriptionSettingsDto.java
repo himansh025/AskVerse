@@ -19,5 +19,6 @@ public class CreatorSubscriptionSettingsDto {
     private BigDecimal subscriptionPrice;
     private String subscriptionCurrency;
     private Long activeSubscriberCount;
+    private BigDecimal monthlySubscriptionIncome;
     private Boolean subscribedByViewer;
 }

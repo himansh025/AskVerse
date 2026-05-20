@@ -110,7 +110,7 @@ public class UserService {
         user.setDob(null);
         user.setPremiumCreatorEnabled(Boolean.FALSE);
         user.setSubscriptionPrice(BigDecimal.valueOf(9.99));
-        user.setSubscriptionCurrency("USD");
+        user.setSubscriptionCurrency("INR");
 
         return userRepository.save(user);
     }
@@ -140,6 +140,7 @@ public class UserService {
                 .subscriptionPrice(subscriptionService.resolveSubscriptionPrice(user))
                 .subscriptionCurrency(subscriptionService.resolveSubscriptionCurrency(user))
                 .activeSubscriberCount(subscriptionService.countActiveSubscribers(user.getId()))
+                .monthlySubscriptionIncome(subscriptionService.calculateMonthlySubscriptionIncome(user))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
@@ -191,6 +192,7 @@ public class UserService {
                 .subscriptionPrice(subscriptionService.resolveSubscriptionPrice(user))
                 .subscriptionCurrency(subscriptionService.resolveSubscriptionCurrency(user))
                 .activeSubscriberCount(subscriptionService.countActiveSubscribers(userId))
+                .monthlySubscriptionIncome(subscriptionService.calculateMonthlySubscriptionIncome(user))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .questions(questions)

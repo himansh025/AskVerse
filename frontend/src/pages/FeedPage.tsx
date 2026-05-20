@@ -1,8 +1,7 @@
 // src/pages/FeedPage.tsx
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../features/auth/authSlice.ts';
 import axiosInstance from '../config/api.ts';
 import QuestionList from '../features/questions/QuestionList.tsx';
 import Loader from '../components/Loader.tsx';
@@ -13,36 +12,10 @@ import { ArrowRight, Compass, Sparkles, TrendingUp } from 'lucide-react';
 export default function FeedPage() {
   const [feed, setFeed] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, token } = useSelector((state: any) => state.auth);
-  const dispatch = useDispatch();
+  const { user } = useSelector((state: any) => state.auth);
   const navigate = useNavigate();
   const [allFeed, setAllFeed] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    const loadUser = async () => {
-      if (!user && token) {
-        setIsLoading(true);
-        try {
-          const { data } = await axiosInstance.get('/api/v1/users/me', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          // Extract user data from ApiResponse wrapper
-          const userData = data.data || data;
-          dispatch(login({ user: userData, token }));
-        } catch (err: any) {
-          console.error('Failed to fetch user profile:', err);
-          // Token probably expired → send back to login
-          navigate('/login', { replace: true });
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadUser();
-  }, [user, token, dispatch, navigate]);
-
 
   useEffect(() => {
     const loadUserFeed = async () => {

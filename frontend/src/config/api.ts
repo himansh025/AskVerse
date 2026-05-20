@@ -1,4 +1,4 @@
-import axios, { AxiosError, type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, type AxiosInstance, type AxiosResponse } from "axios";
 
 const apiUrl:string = import.meta.env.VITE_API_URL;
 
@@ -6,26 +6,12 @@ const apiUrl:string = import.meta.env.VITE_API_URL;
 
 const axiosInstance:AxiosInstance = axios.create({
   baseURL: `${apiUrl}`,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 30000,
 });
-
-// Request interceptor
-axiosInstance.interceptors.request.use(
-  (config:InternalAxiosRequestConfig):InternalAxiosRequestConfig => {
-    const token = localStorage.getItem("token");
-    if (token && config.headers) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error:AxiosError):Promise<AxiosError> => {
-    return Promise.reject(error);
-  }
-);
 
 // Response interceptor
 axiosInstance.interceptors.response.use(

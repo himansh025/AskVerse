@@ -60,7 +60,7 @@ public class User {
     private BigDecimal subscriptionPrice;
 
     @Column(length = 10)
-    private String subscriptionCurrency = "USD";
+    private String subscriptionCurrency = "INR";
 
     @CreationTimestamp
     @Column(updatable = false)

@@ -1,6 +1,5 @@
 // src/features/comments/commentsApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { getToken } from '../../utils/token.ts';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -8,13 +7,7 @@ export const commentsApi = createApi({
   reducerPath: 'commentsApi',
   baseQuery: fetchBaseQuery({
     baseUrl: BASE_URL,
-    prepareHeaders: (headers) => {
-      const token = getToken();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
+    credentials: 'include',
   }),
   tagTypes: ['Comments'],
   endpoints: (builder) => ({

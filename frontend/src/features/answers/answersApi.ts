@@ -1,6 +1,5 @@
 // src/features/answers/answersApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { getToken } from '../../utils/token.ts';
 
 // const BASE_URL = 'https://askverse-db8w.onrender.com';
  const BASE_URL = import.meta.env.VITE_API_URL;
@@ -9,13 +8,7 @@ import { getToken } from '../../utils/token.ts';
   reducerPath: 'answersApi',
   baseQuery: fetchBaseQuery({
     baseUrl: BASE_URL,
-    prepareHeaders: (headers) => {
-      const token = getToken();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
+    credentials: 'include',
   }),
   tagTypes: ['Answers'],
   endpoints: (builder) => ({

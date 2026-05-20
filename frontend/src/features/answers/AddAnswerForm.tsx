@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCreateAnswerMutation } from './answersApi.ts';
 import Button from '../../components/Button.tsx';
 import { useSelector } from 'react-redux';
+import { getApiErrorMessage, showErrorToast, showSuccessToast } from '../../utils/notify.ts';
 
 interface AddAnswerFormProps {
   questionId: number;
@@ -18,8 +19,10 @@ export default function AddAnswerForm({ questionId }: AddAnswerFormProps) {
     try {
       await createAnswer({ content, questionId, userId: user.id }).unwrap();
       setContent('');
+      showSuccessToast('Answer posted successfully');
     } catch (err) {
       console.error(err);
+      showErrorToast(getApiErrorMessage(err, 'Failed to post answer'));
     }
   };
 

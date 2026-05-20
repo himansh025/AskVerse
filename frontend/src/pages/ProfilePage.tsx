@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity,
-  BadgeDollarSign,
   Calendar,
   Camera,
   Edit3,
   FileText,
   Globe,
+  IndianRupee,
   Lock,
   MapPin,
   MessageSquare,
@@ -21,10 +21,24 @@ import Loader from '../components/Loader.tsx';
 import axiosInstance from '../config/api.ts';
 import { setProfileData } from '../store/dataSlicer.ts';
 import { updateUser } from '../features/auth/authSlice.ts';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 export default function ProfilePage() {
   const { user } = useSelector((state: any) => state.auth);
   const { profileData } = useSelector((state: any) => state.data);
+  const displaySubscriptionCurrency = (currency?: string) =>
+    !currency || currency.toUpperCase() === 'USD' ? 'INR' : currency.toUpperCase();
+  const formatCurrencyAmount = (amount?: string | number) => {
+    const numericAmount = Number(amount ?? 0);
+    if (Number.isNaN(numericAmount)) {
+      return '0.00';
+    }
+
+    return numericAmount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -75,9 +89,10 @@ export default function ProfilePage() {
       const updatedProfile = profileResponse.data.data;
       dispatch(setProfileData(updatedProfile));
       dispatch(updateUser(updatedProfile));
+      showSuccessToast(getApiSuccessMessage(profileResponse.data, 'Profile image updated successfully'));
     } catch (error: any) {
       console.error('Error uploading profile image:', error);
-      alert(error.response?.data?.message || 'Failed to upload profile image');
+      showErrorToast(getApiErrorMessage(error, 'Failed to upload profile image'));
     } finally {
       setUploadingAvatar(false);
       event.target.value = '';
@@ -105,9 +120,10 @@ export default function ProfilePage() {
       const updatedProfile = profileResponse.data.data;
       dispatch(setProfileData(updatedProfile));
       dispatch(updateUser(updatedProfile));
+      showSuccessToast(getApiSuccessMessage(profileResponse.data, 'Cover image updated successfully'));
     } catch (error: any) {
       console.error('Error uploading cover image:', error);
-      alert(error.response?.data?.message || 'Failed to upload cover image');
+      showErrorToast(getApiErrorMessage(error, 'Failed to upload cover image'));
     } finally {
       setUploadingCover(false);
       event.target.value = '';
@@ -455,16 +471,25 @@ export default function ProfilePage() {
             <div className="space-y-4 text-sm text-slate-600">
               <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  <BadgeDollarSign size={14} />
+                  <IndianRupee size={14} />
                   Monthly price
                 </div>
                 <p className="mt-2 font-medium text-slate-800">
-                  {profileData?.subscriptionCurrency || 'USD'} {profileData?.subscriptionPrice || '9.99'}
+                  {displaySubscriptionCurrency(profileData?.subscriptionCurrency)} {profileData?.subscriptionPrice || '9.99'}
                 </p>
               </div>
               <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Active subscribers</p>
                 <p className="mt-2 font-medium text-slate-800">{profileData?.activeSubscriberCount || 0}</p>
+              </div>
+              <div className="rounded-[20px] border border-slate-200 bg-white/75 p-4">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <IndianRupee size={14} />
+                  Monthly income
+                </div>
+                <p className="mt-2 font-medium text-slate-800">
+                  {displaySubscriptionCurrency(profileData?.subscriptionCurrency)} {formatCurrencyAmount(profileData?.monthlySubscriptionIncome)}
+                </p>
               </div>
               <p className="text-sm leading-6 text-slate-600">
                 Premium posts let you publish subscriber-only content while keeping your public questions, answers, and comments open to the community.

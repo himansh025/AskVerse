@@ -6,6 +6,7 @@ import Button from '../components/Button.tsx';
 import Loader from '../components/Loader.tsx';
 import AddTagModal from '../features/tags/AddTagModal.tsx';
 import { useSelector } from 'react-redux';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 interface Tag {
   id: number;
@@ -66,12 +67,13 @@ export default function TagsPage() {
 
     setFollowing((prev) => ({ ...prev, [tagId]: true }));
     try {
-      await axiosInstance.post(`/api/v1/users/${user.id}/followTag/${tagId}`);
+      const response = await axiosInstance.post(`/api/v1/users/${user.id}/followTag/${tagId}`);
       setFollowedTagIds((prev) => new Set(prev).add(tagId));
       fetchTags();
+      showSuccessToast(getApiSuccessMessage(response.data, 'Tag followed successfully'));
     } catch (error) {
       console.error('Failed to follow tag:', error);
-      alert('Could not follow tag. Please try again.');
+      showErrorToast(getApiErrorMessage(error, 'Could not follow tag'));
     } finally {
       setFollowing((prev) => ({ ...prev, [tagId]: false }));
     }
@@ -84,16 +86,17 @@ export default function TagsPage() {
 
     setFollowing((prev) => ({ ...prev, [tagId]: true }));
     try {
-      await axiosInstance.delete(`/api/v1/users/${user.id}/unfollowTag/${tagId}`);
+      const response = await axiosInstance.delete(`/api/v1/users/${user.id}/unfollowTag/${tagId}`);
       setFollowedTagIds((prev) => {
         const next = new Set(prev);
         next.delete(tagId);
         return next;
       });
       fetchTags();
+      showSuccessToast(getApiSuccessMessage(response.data, 'Tag unfollowed successfully'));
     } catch (error) {
       console.error('Failed to unfollow tag:', error);
-      alert('Could not unfollow tag. Please try again.');
+      showErrorToast(getApiErrorMessage(error, 'Could not unfollow tag'));
     } finally {
       setFollowing((prev) => ({ ...prev, [tagId]: false }));
     }

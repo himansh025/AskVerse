@@ -48,6 +48,8 @@ public class UserProfileDto {
 
     private Long activeSubscriberCount;
 
+    private BigDecimal monthlySubscriptionIncome;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

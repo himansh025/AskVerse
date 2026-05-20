@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -51,11 +52,14 @@ public class SubscriptionService {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${app.subscription.default-currency:USD}")
+    @Value("${app.subscription.default-currency:INR}")
     private String defaultCurrency;
 
     @Value("${app.payment.default-gateway:RAZORPAY}")
     private String defaultPaymentGateway;
+
+    @Value("${app.frontend.base-url:http://localhost:5173}")
+    private String frontendBaseUrl;
 
     @Value("${razorpay.key-id:}")
     private String razorpayKeyId;
@@ -91,6 +95,7 @@ public class SubscriptionService {
     public CreatorSubscriptionSettingsDto getCreatorSettings(Long creatorId, Long viewerId) {
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Creator not found"));
+        long activeSubscriberCount = subscriptionRepository.countByCreatorIdAndStatus(creatorId, SubscriptionStatus.ACTIVE);
 
         return CreatorSubscriptionSettingsDto.builder()
                 .creatorId(creator.getId())
@@ -99,7 +104,8 @@ public class SubscriptionService {
                 .premiumCreatorEnabled(Boolean.TRUE.equals(creator.getPremiumCreatorEnabled()))
                 .subscriptionPrice(resolveSubscriptionPrice(creator))
                 .subscriptionCurrency(resolveSubscriptionCurrency(creator))
-                .activeSubscriberCount(subscriptionRepository.countByCreatorIdAndStatus(creatorId, SubscriptionStatus.ACTIVE))
+                .activeSubscriberCount(activeSubscriberCount)
+                .monthlySubscriptionIncome(calculateMonthlySubscriptionIncome(creator, activeSubscriberCount))
                 .subscribedByViewer(hasActiveSubscription(viewerId, creatorId))
                 .build();
     }
@@ -186,6 +192,19 @@ public class SubscriptionService {
         PaymentTransaction transaction = paymentTransactionRepository.findByPaymentReference(request.getPaymentReference())
                 .orElseThrow(() -> new ResourceNotFoundException("Payment reference not found"));
 
+        if (transaction.getStatus() == PaymentStatus.PAID && transaction.getSubscription() != null) {
+            Subscription existingSubscription = transaction.getSubscription();
+            return SubscriptionStatusDto.builder()
+                    .creatorId(existingSubscription.getCreator().getId())
+                    .subscriberId(existingSubscription.getSubscriber().getId())
+                    .subscribed(existingSubscription.getStatus() == SubscriptionStatus.ACTIVE
+                            && existingSubscription.getExpiresAt() != null
+                            && existingSubscription.getExpiresAt().isAfter(LocalDateTime.now()))
+                    .status(existingSubscription.getStatus().name())
+                    .expiresAt(existingSubscription.getExpiresAt())
+                    .build();
+        }
+
         if (!transaction.getCreator().getId().equals(request.getCreatorId())
                 || !transaction.getSubscriber().getId().equals(request.getSubscriberId())) {
             throw new IllegalArgumentException("Payment details do not match the checkout session");
@@ -237,9 +256,44 @@ public class SubscriptionService {
                 .build();
     }
 
+    @Transactional
+    public String handleRazorpayCallback(
+            Long creatorId,
+            Long subscriberId,
+            String paymentReference,
+            Long questionId,
+            String paymentGatewayOrderId,
+            String externalPaymentId,
+            String paymentSignature) {
+        try {
+            SubscriptionConfirmRequestDto request = new SubscriptionConfirmRequestDto();
+            request.setCreatorId(creatorId);
+            request.setSubscriberId(subscriberId);
+            request.setPaymentReference(paymentReference);
+            request.setPaymentGatewayOrderId(paymentGatewayOrderId);
+            request.setExternalPaymentId(externalPaymentId);
+            request.setPaymentSignature(paymentSignature);
+            confirmCheckout(request);
+            return buildQuestionRedirectUrl(questionId, "success", null);
+        } catch (RuntimeException exception) {
+            return buildQuestionRedirectUrl(questionId, "failed", exception.getMessage());
+        }
+    }
+
     @Transactional(readOnly = true)
     public long countActiveSubscribers(Long creatorId) {
         return subscriptionRepository.countByCreatorIdAndStatus(creatorId, SubscriptionStatus.ACTIVE);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal calculateMonthlySubscriptionIncome(User creator) {
+        return calculateMonthlySubscriptionIncome(creator, countActiveSubscribers(creator.getId()));
+    }
+
+    private BigDecimal calculateMonthlySubscriptionIncome(User creator, long activeSubscriberCount) {
+        return resolveSubscriptionPrice(creator)
+                .multiply(BigDecimal.valueOf(activeSubscriberCount))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     public BigDecimal resolveSubscriptionPrice(User creator) {
@@ -250,10 +304,33 @@ public class SubscriptionService {
     }
 
     public String resolveSubscriptionCurrency(User creator) {
+        String currency;
         if (creator.getSubscriptionCurrency() != null && !creator.getSubscriptionCurrency().isBlank()) {
-            return creator.getSubscriptionCurrency().toUpperCase(Locale.ROOT);
+            currency = creator.getSubscriptionCurrency().toUpperCase(Locale.ROOT);
+        } else {
+            currency = defaultCurrency.toUpperCase(Locale.ROOT);
         }
-        return defaultCurrency.toUpperCase(Locale.ROOT);
+        return normalizeCheckoutCurrency(resolveGateway(null), currency);
+    }
+
+    private String normalizeCheckoutCurrency(PaymentGateway gateway, String currency) {
+        if (gateway == PaymentGateway.RAZORPAY && !"INR".equalsIgnoreCase(currency)) {
+            return "INR";
+        }
+        return currency.toUpperCase(Locale.ROOT);
+    }
+
+    private String buildQuestionRedirectUrl(Long questionId, String status, String message) {
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromUriString(frontendBaseUrl)
+                .path("/question/{questionId}")
+                .queryParam("subscription", status);
+
+        if (message != null && !message.isBlank()) {
+            builder.queryParam("subscriptionMessage", message);
+        }
+
+        return builder.buildAndExpand(questionId).toUriString();
     }
 
     private PaymentGateway resolveGateway(String gateway) {

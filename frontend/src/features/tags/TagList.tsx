@@ -5,6 +5,7 @@ import Button from '../../components/Button.tsx';
 import Card from '../../components/Card.tsx';
 import Loader from '../../components/Loader.tsx';
 import { useSelector } from 'react-redux';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../../utils/notify.ts';
 
 interface Tag {
   id: number;
@@ -63,12 +64,13 @@ export default function TagsPage() {
     setFollowing(prev => ({ ...prev, [tagId]: true }));
 
     try {
-      await axiosInstance.post(`/api/v1/users/${user.id}/followTag/${tagId}`);
+      const response = await axiosInstance.post(`/api/v1/users/${user.id}/followTag/${tagId}`);
+      showSuccessToast(getApiSuccessMessage(response.data, 'Tag followed successfully'));
       // console.log(`Now following tag ${tagId}`);
       // Optional: refetch user or tags
     } catch (error: any) {
       console.error('Failed to follow tag:', error);
-      alert('Could not follow tag. Please try again.');
+      showErrorToast(getApiErrorMessage(error, 'Could not follow tag'));
     } finally {
       setFollowing(prev => ({ ...prev, [tagId]: false }));
     }

@@ -19,37 +19,54 @@ import Loader from './components/Loader.tsx';
 import ProtectedRoute from './features/auth/ProtectedRoute.tsx';
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const hideNavbar = ['/login', '/signup'].includes(location.pathname);
-  const userToken = localStorage.getItem("token")
+
   useEffect(() => {
-    if (userToken) {
-      const getMe = async () => {
-        if (!user && userToken) {
-          setIsLoading(true);
-          try {
-            const { data } = await axiosInstance.get('/api/v1/users/me', {
-              headers: { Authorization: `Bearer ${userToken}` },
-            });
-            const userData = data.data || data;
-            dispatch(login({ user: userData, token: userToken }));
-            navigate('/');
-          } catch (err: any) {
-            console.error('Failed to fetch user profile:', err);
-            localStorage.removeItem("token")
-            navigate('/login', { replace: true });
-          } finally {
-            setIsLoading(false);
-          }
+    let isMounted = true;
+
+    const getMe = async () => {
+      if (user) {
+        if (isMounted) {
+          setIsLoading(false);
         }
-      };
-      getMe()
-    }
-  }, [user, userToken, dispatch, navigate]);
+        return;
+      }
+
+      try {
+        const { data } = await axiosInstance.get('/api/v1/users/me');
+        const userData = data.data || data;
+
+        if (!isMounted) {
+          return;
+        }
+
+        dispatch(login({ user: userData }));
+
+        if (hideNavbar) {
+          navigate('/', { replace: true });
+        }
+      } catch (err: any) {
+        if (err.response?.status !== 401) {
+          console.error('Failed to fetch user profile:', err);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void getMe();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, hideNavbar, navigate, user]);
 
   if (isLoading) {
     return (

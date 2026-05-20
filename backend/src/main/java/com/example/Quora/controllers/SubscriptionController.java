@@ -7,6 +7,8 @@ import com.example.Quora.dtos.SubscriptionCheckoutResponseDto;
 import com.example.Quora.dtos.SubscriptionConfirmRequestDto;
 import com.example.Quora.dtos.SubscriptionStatusDto;
 import com.example.Quora.services.SubscriptionService;
+import java.net.URI;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,5 +64,28 @@ public class SubscriptionController {
                 ApiResponse.success(
                         "Subscription activated successfully",
                         subscriptionService.confirmCheckout(request)));
+    }
+
+    @PostMapping("/razorpay/callback")
+    public ResponseEntity<Void> handleRazorpayCallback(
+            @RequestParam("creatorId") Long creatorId,
+            @RequestParam("subscriberId") Long subscriberId,
+            @RequestParam("paymentReference") String paymentReference,
+            @RequestParam("questionId") Long questionId,
+            @RequestParam("razorpay_order_id") String razorpayOrderId,
+            @RequestParam("razorpay_payment_id") String razorpayPaymentId,
+            @RequestParam("razorpay_signature") String razorpaySignature) {
+        String redirectUrl = subscriptionService.handleRazorpayCallback(
+                creatorId,
+                subscriberId,
+                paymentReference,
+                questionId,
+                razorpayOrderId,
+                razorpayPaymentId,
+                razorpaySignature);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(redirectUrl));
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 }

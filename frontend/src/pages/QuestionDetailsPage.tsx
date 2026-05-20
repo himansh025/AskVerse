@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  BadgeDollarSign,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Expand,
+  IndianRupee,
   Lock,
   MessageCircle,
   Send,
@@ -17,6 +17,8 @@ import {
 import axiosInstance from '../config/api.ts';
 import Loader from '../components/Loader.tsx';
 import { useSelector } from 'react-redux';
+import DebateSection from '../features/debates/DebateSection.tsx';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 interface User {
   id: number;
@@ -79,6 +81,7 @@ interface CheckoutSession {
 export default function QuestionDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useSelector((state: any) => state.auth);
 
   const [question, setQuestion] = useState<Question | null>(null);
@@ -95,10 +98,30 @@ export default function QuestionDetailsPage() {
   const [confirmingCheckout, setConfirmingCheckout] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [isMediaPreviewOpen, setIsMediaPreviewOpen] = useState(false);
+  const displaySubscriptionCurrency = (currency?: string) =>
+    !currency || currency.toUpperCase() === 'USD' ? 'INR' : currency.toUpperCase();
 
   useEffect(() => {
     fetchQuestionAndAnswers();
   }, [id, user?.id]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const subscriptionStatus = searchParams.get('subscription');
+    const subscriptionMessage = searchParams.get('subscriptionMessage');
+
+    if (!subscriptionStatus) {
+      return;
+    }
+
+    if (subscriptionStatus === 'success') {
+      showSuccessToast('Subscription activated successfully');
+    } else {
+      showErrorToast(subscriptionMessage || 'Failed to activate subscription');
+    }
+
+    navigate(location.pathname, { replace: true });
+  }, [location.pathname, location.search, navigate]);
 
   const fetchQuestionAndAnswers = async () => {
     if (!id) {
@@ -146,9 +169,10 @@ export default function QuestionDetailsPage() {
       const createdAnswer = response.data.data || response.data;
       setAnswers((prev) => [createdAnswer, ...prev]);
       setNewAnswer('');
+      showSuccessToast(getApiSuccessMessage(response.data, 'Answer posted successfully'));
     } catch (error) {
       console.error('Error submitting answer:', error);
-      alert('Failed to submit answer. Please try again.');
+      showErrorToast(getApiErrorMessage(error, 'Failed to submit answer'));
     } finally {
       setSubmittingAnswer(false);
     }
@@ -205,9 +229,10 @@ export default function QuestionDetailsPage() {
           answer.id === answerId ? { ...answer, commentCount: answer.commentCount + 1 } : answer,
         ),
       );
+      showSuccessToast(getApiSuccessMessage(response.data, 'Comment posted successfully'));
     } catch (error) {
       console.error('Error submitting comment:', error);
-      alert('Failed to submit comment. Please try again.');
+      showErrorToast(getApiErrorMessage(error, 'Failed to submit comment'));
     } finally {
       setSubmittingComments((prev) => {
         const next = new Set(prev);
@@ -258,9 +283,10 @@ export default function QuestionDetailsPage() {
 
       setCheckoutSession(null);
       await fetchQuestionAndAnswers();
+      showSuccessToast('Subscription activated successfully');
     } catch (error: any) {
       console.error('Error confirming subscription:', error);
-      alert(error.response?.data?.error || error.response?.data?.message || 'Failed to activate subscription.');
+      showErrorToast(getApiErrorMessage(error, 'Failed to activate subscription'));
     } finally {
       setConfirmingCheckout(false);
     }
@@ -269,9 +295,19 @@ export default function QuestionDetailsPage() {
   const openRazorpayCheckout = async (session: CheckoutSession) => {
     await loadRazorpayScript();
     const razorpayKey = session.gatewayPublicKey || import.meta.env.VITE_RAZORPAY_KEY_ID;
+    const apiBaseUrl = import.meta.env.VITE_API_URL;
     if (!razorpayKey) {
       throw new Error('Razorpay public key is missing.');
     }
+    if (!apiBaseUrl || !id || !user?.id || !question?.authorId) {
+      throw new Error('Checkout callback configuration is incomplete.');
+    }
+
+    const callbackUrl = new URL('/api/v1/subscriptions/razorpay/callback', apiBaseUrl);
+    callbackUrl.searchParams.set('creatorId', String(question.authorId));
+    callbackUrl.searchParams.set('subscriberId', String(user.id));
+    callbackUrl.searchParams.set('paymentReference', session.paymentReference);
+    callbackUrl.searchParams.set('questionId', String(id));
 
     const options = {
       key: razorpayKey,
@@ -280,13 +316,8 @@ export default function QuestionDetailsPage() {
       order_id: session.paymentGatewayOrderId,
       name: `@${question?.username ?? 'Creator'}`,
       description: 'Subscribe for premium content',
-      handler: async (response: any) => {
-        await handleConfirmSubscription({
-          paymentGatewayOrderId: response.razorpay_order_id,
-          externalPaymentId: response.razorpay_payment_id,
-          paymentSignature: response.razorpay_signature,
-        });
-      },
+      callback_url: callbackUrl.toString(),
+      redirect: true,
       prefill: {
         name: user?.name,
         email: user?.email,
@@ -321,7 +352,7 @@ export default function QuestionDetailsPage() {
       }
     } catch (error: any) {
       console.error('Error creating checkout:', error);
-      alert(error.response?.data?.error || error.response?.data?.message || 'Failed to start subscription.');
+      showErrorToast(getApiErrorMessage(error, 'Failed to start subscription'));
     } finally {
       setStartingCheckout(false);
     }
@@ -537,8 +568,8 @@ export default function QuestionDetailsPage() {
                       <div className="mt-5 grid gap-4 rounded-2xl border border-white/90 bg-white/90 p-5 md:grid-cols-[1fr_auto] md:items-center">
                         <div>
                           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                            <BadgeDollarSign size={16} className="text-[#07528f]" />
-                            {question.subscriptionCurrency || 'USD'} {question.subscriptionPrice || 9.99} / month
+                            <IndianRupee size={16} className="text-[#07528f]" />
+                            {displaySubscriptionCurrency(question.subscriptionCurrency)} {question.subscriptionPrice || 9.99} / month
                           </div>
                           <p className="mt-2 text-sm text-slate-600">
                             Subscribe to @{question.username} to unlock this premium post and future subscriber-only content.
@@ -593,6 +624,8 @@ export default function QuestionDetailsPage() {
 
       {canShowDiscussion ? (
         <>
+          <DebateSection questionId={question.id} />
+
           <div className="mb-8 rounded-2xl bg-white p-6 shadow-lg">
             <h2 className="mb-4 text-2xl font-bold text-gray-900">Your Answer</h2>
             <form onSubmit={handleSubmitAnswer}>

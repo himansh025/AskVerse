@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axiosInstance from '../../config/api.ts';
 import Button from '../../components/Button.tsx';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../../utils/notify.ts';
 
 interface AddCommentFormProps {
   answerId: number;
@@ -15,12 +16,12 @@ export default function AddCommentForm({ answerId }: AddCommentFormProps) {
     setLoading(true);
 
     try {
-      await axiosInstance.post('/api/v1/comments', { content, answerId });
-      alert('Comment created');
+      const response = await axiosInstance.post('/api/v1/comments', { content, answerId });
+      showSuccessToast(getApiSuccessMessage(response.data, 'Comment created successfully'));
       setContent('');
       window.location.reload();
     } catch (error: any) {
-      alert(`Comment failed ${error}`);
+      showErrorToast(getApiErrorMessage(error, 'Failed to create comment'));
     } finally {
       setLoading(false);
     }

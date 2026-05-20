@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../features/auth/authSlice.ts';
 import { useDispatch, useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
+import axiosInstance from '../config/api.ts';
 import {
   ArrowRight,
   CircleHelp,
@@ -14,6 +15,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 export default function Navbar() {
   const { user } = useSelector((state: any) => state.auth);
@@ -36,10 +38,16 @@ export default function Navbar() {
     setIsOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    dispatch(logout());
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      const response = await axiosInstance.post('/api/v1/users/signout');
+      showSuccessToast(getApiSuccessMessage(response.data, 'Logged out successfully'));
+    } catch (error) {
+      showErrorToast(getApiErrorMessage(error, 'Failed to sign out cleanly'));
+    } finally {
+      dispatch(logout());
+      navigate('/login');
+    }
   };
 
   const navigationItems = [

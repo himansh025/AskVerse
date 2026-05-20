@@ -1,15 +1,14 @@
 // src/features/auth/authSlice.ts
 import { createSlice } from '@reduxjs/toolkit';
-import { removeToken, setToken } from '../../utils/token.ts';
 
 interface AuthState {
   user: any | null;
-  token: string | null;
+  isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
-  token: null,
+  isAuthenticated: false,
 };
 
 const authSlice = createSlice({
@@ -18,20 +17,20 @@ const authSlice = createSlice({
   reducers: {
     login: (state, action) => {
       state.user = action.payload.user;
-      state.token = action.payload.token;
-      setToken(action.payload.token);
+      state.isAuthenticated = true;
     },
     logout: (state) => {
       state.user = null;
-      state.token = null;
-      removeToken();
+      state.isAuthenticated = false;
     },
     updateUser: (state, action) => {
       if (!state.user) {
         state.user = action.payload;
+        state.isAuthenticated = true;
         return;
       }
       state.user = { ...state.user, ...action.payload };
+      state.isAuthenticated = true;
     },
   },
 });

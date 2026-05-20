@@ -22,16 +22,22 @@ public class GlobalCorsConfig {
     @Value("${app.cors.production-origins}")
     private String prodOrigins;
 
+    @Value("${app.cors.payment-origins:}")
+    private String paymentOrigins;
+
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        List<String> allowedOrigins = new ArrayList<>();
-        allowedOrigins.addAll(Arrays.asList(localOrigins.split(",")));
-        allowedOrigins.addAll(Arrays.asList(prodOrigins.split(",")));
+        List<String> allowedOriginPatterns = new ArrayList<>();
+        allowedOriginPatterns.addAll(Arrays.asList(localOrigins.split(",")));
+        allowedOriginPatterns.addAll(Arrays.asList(prodOrigins.split(",")));
+        if (paymentOrigins != null && !paymentOrigins.isBlank()) {
+            allowedOriginPatterns.addAll(Arrays.asList(paymentOrigins.split(",")));
+        }
 
-        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedOriginPatterns(allowedOriginPatterns);
         config.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
@@ -46,7 +52,7 @@ public class GlobalCorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
 
-        System.out.println("🔍 CORS ALLOWED ORIGINS => " + allowedOrigins);
+        System.out.println("🔍 CORS ALLOWED ORIGIN PATTERNS => " + allowedOriginPatterns);
 
         return source;
     }

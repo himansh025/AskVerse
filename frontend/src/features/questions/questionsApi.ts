@@ -1,6 +1,5 @@
 // src/features/questions/questionsApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { getToken } from '../../utils/token.ts';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 // const BASE_URL = "http://localhost:8080";
@@ -9,13 +8,7 @@ export const questionsApi = createApi({
   reducerPath: 'questionsApi',
   baseQuery: fetchBaseQuery({
     baseUrl: BASE_URL,
-    prepareHeaders: (headers) => {
-      const token = getToken();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
+    credentials: 'include',
   }),
   tagTypes: ['Questions'],
   endpoints: (builder) => ({

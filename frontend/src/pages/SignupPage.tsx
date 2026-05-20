@@ -6,6 +6,7 @@ import axiosInstance from '../config/api.ts';
 import Button from '../components/Button.tsx';
 import Input from '../components/Input.tsx';
 import { ArrowRight, Compass, PenSquare, Users } from 'lucide-react';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', username: '', password: '' });
@@ -18,15 +19,11 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      await axiosInstance.post('/api/v1/users/signup', form);
-      // console.log('Signup data:', data);
-      alert("Signup successful");
-      // Assuming signup returns user data, dispatch login
-      // dispatch(login({ user: data, token: null })); // Token from login
+      const response = await axiosInstance.post('/api/v1/users/signup', form);
+      showSuccessToast(getApiSuccessMessage(response.data, 'Signup successful'));
       navigate('/login');
     } catch (error: any) {
-      alert(`Signup failed ${error}`);
-      // console.error('Signup error:', error);
+      showErrorToast(getApiErrorMessage(error, 'Signup failed'));
     } finally {
       setLoading(false);
     }

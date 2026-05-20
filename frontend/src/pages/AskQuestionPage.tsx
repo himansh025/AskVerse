@@ -20,6 +20,7 @@ import {
   Sparkles,
   BadgeDollarSign
 } from 'lucide-react';
+import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
 interface Tag {
   id: number;
@@ -76,7 +77,15 @@ export default function AskQuestionPage() {
   }, [selectedMedia]);
 
   const validateForm = () => {
-    const newErrors = { title: '', content: '', tags: '', media: '', previewContent: '', premiumContent: '' };
+    const newErrors = {
+      title: '',
+      content: '',
+      tags: '',
+      media: '',
+      previewContent: '',
+      premiumContent: '',
+      isAnonymous: '',
+    };
     let isValid = true;
 
     if (form.title.length < 10) {
@@ -132,10 +141,11 @@ export default function AskQuestionPage() {
       });
 
       console.log('Question created:', data);
+      showSuccessToast(getApiSuccessMessage(data, 'Question posted successfully'));
       navigate('/');
     } catch (error: any) {
       console.error('Error creating question:', error);
-      alert('Failed to post question. Please try again.');
+      showErrorToast(getApiErrorMessage(error, 'Failed to post question'));
     } finally {
       setLoading(false);
     }
@@ -333,7 +343,7 @@ export default function AskQuestionPage() {
                     </p>
                     <p className="mt-2 text-sm text-slate-300">
                       {user?.premiumCreatorEnabled
-                        ? `Subscribers will unlock your full post for ${user.subscriptionCurrency || 'USD'} ${user.subscriptionPrice || '9.99'} per month.`
+                        ? `Subscribers will unlock your full post for ${!user?.subscriptionCurrency || user.subscriptionCurrency.toUpperCase() === 'USD' ? 'INR' : user.subscriptionCurrency.toUpperCase()} ${user.subscriptionPrice || '9.99'} per month.`
                         : 'Enable subscriptions from your profile edit page before publishing premium posts.'}
                     </p>
                   </div>
