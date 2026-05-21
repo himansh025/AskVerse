@@ -1,6 +1,4 @@
-// src/pages/FeedPage.tsx
-import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../config/api.ts';
 import QuestionList from '../features/questions/QuestionList.tsx';
@@ -8,26 +6,37 @@ import Loader from '../components/Loader.tsx';
 import Button from '../components/Button.tsx';
 import { SearchBar } from '../components/SearchBar.tsx';
 import { ArrowRight, Compass, Sparkles, TrendingUp } from 'lucide-react';
+import { setFeedData } from '../store/dataSlicer.ts';
+import { useEffect, useState } from 'react';
 
 export default function FeedPage() {
   const [feed, setFeed] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useSelector((state: any) => state.auth);
+  const { feedData } = useSelector((state: any) => state.data);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [allFeed, setAllFeed] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    if (feedData && feedData.length > 0) {
+      setAllFeed(feedData);
+      setFeed(feedData);
+      return;
+    }
+
     const loadUserFeed = async () => {
       if (!user?.id) return;
       setIsLoading(true);
-        try {
-          const { data } = await axiosInstance.get(
+      try {
+        const { data } = await axiosInstance.get(
           `/api/v1/feed/${user.id}?page=0&size=10`
         );
-        const feedData = data.data || data;
-        setAllFeed(feedData);
-        setFeed(feedData);
+        const resData = data.data || data;
+        setAllFeed(resData);
+        setFeed(resData);
+        dispatch(setFeedData(resData));
       } catch (err) {
         console.error(err);
       } finally {
@@ -37,14 +46,15 @@ export default function FeedPage() {
 
     const loadFeed = async () => {
       setIsLoading(true);
-        try {
+      try {
         const viewerQuery = user?.id ? `&viewerUserId=${user.id}` : '';
-          const { data } = await axiosInstance.get(
+        const { data } = await axiosInstance.get(
           `/api/v1/questions/all?page=0&size=10${viewerQuery}`
         );
-        const feedData = data.data || data;
-        setAllFeed(feedData);
-        setFeed(feedData);
+        const resData = data.data || data;
+        setAllFeed(resData);
+        setFeed(resData);
+        dispatch(setFeedData(resData));
       } catch (err) {
         console.error(err);
       } finally {
@@ -57,7 +67,7 @@ export default function FeedPage() {
     } else {
       loadFeed();
     }
-  }, [user]);
+  }, [user, feedData, dispatch]);
 
 
   useEffect(() => {

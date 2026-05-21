@@ -5,8 +5,9 @@ import axiosInstance from '../config/api.ts';
 import Button from '../components/Button.tsx';
 import Loader from '../components/Loader.tsx';
 import AddTagModal from '../features/tags/AddTagModal.tsx';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
+import { setTagData } from '../store/dataSlicer.ts';
 
 interface Tag {
   id: number;
@@ -24,13 +25,22 @@ export default function TagsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddTagModalOpen, setIsAddTagModalOpen] = useState(false);
   const { user } = useSelector((state: any) => state.auth);
+  const { tagData } = useSelector((state: any) => state.data);
+  const dispatch = useDispatch();
 
   const fetchTags = async () => {
+    if (tagData && tagData.length > 0) {
+      setTags(tagData);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await axiosInstance.get('/api/v1/tags');
       const data: Tag[] = res.data.data || res.data;
       setTags(data);
+      dispatch(setTagData(data));
     } catch (error) {
       console.error('Failed to load tags:', error);
     } finally {
@@ -54,7 +64,7 @@ export default function TagsPage() {
 
   useEffect(() => {
     fetchTags();
-  }, []);
+  }, [tagData, dispatch]);
 
   useEffect(() => {
     fetchFollowedTags();

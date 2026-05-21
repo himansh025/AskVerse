@@ -65,4 +65,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             @Param("tagId") Long tagId,
             Pageable pageable
     );
+
+    long countByUserId(Long userId);
 }

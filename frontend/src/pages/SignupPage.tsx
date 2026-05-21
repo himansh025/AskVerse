@@ -90,6 +90,7 @@ export default function SignupPage() {
               placeholder="Your full name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
             />
           </div>
           <div>
@@ -99,6 +100,7 @@ export default function SignupPage() {
               placeholder="you@example.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
             />
           </div>
           <div>
@@ -108,6 +110,7 @@ export default function SignupPage() {
               placeholder="Choose a username"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
+              required
             />
           </div>
           <div>
@@ -117,6 +120,7 @@ export default function SignupPage() {
               placeholder="Create a secure password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
             />
           </div>
 

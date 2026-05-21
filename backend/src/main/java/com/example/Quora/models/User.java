@@ -62,6 +62,9 @@ public class User {
     @Column(length = 10)
     private String subscriptionCurrency = "INR";
 
+    @Column(nullable = false)
+    private String role = "USER";
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

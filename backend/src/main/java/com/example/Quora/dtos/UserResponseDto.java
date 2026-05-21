@@ -33,4 +33,7 @@ public class UserResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String token;
+    private String role;
+    private Long questionsCount;
+    private Long followedTagsCount;
 }

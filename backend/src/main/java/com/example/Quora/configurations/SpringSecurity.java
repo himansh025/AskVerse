@@ -57,6 +57,7 @@ public class SpringSecurity {
                                 "/api/v1/answers/**",
                                 "/api/v1/comments/**")
                         .permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

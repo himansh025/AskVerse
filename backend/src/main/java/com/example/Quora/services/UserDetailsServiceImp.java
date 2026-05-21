@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.List;
 
 @Service
 public class UserDetailsServiceImp implements UserDetailsService {
@@ -22,10 +23,13 @@ public class UserDetailsServiceImp implements UserDetailsService {
         Optional<User> user = this.userRepository.findUserByEmail(email);
         System.out.println("users is "+user);
         if (user.isPresent()) {
+            List<org.springframework.security.core.GrantedAuthority> authorities = java.util.Collections.singletonList(
+                    new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.get().getRole().toUpperCase())
+            );
             return new org.springframework.security.core.userdetails.User(
                     user.get().getEmail(),
                     user.get().getPassword(),
-                    Collections.emptyList());
+                    authorities);
         } else {
             throw new UsernameNotFoundException("Cannot find the Passenger by the given Email");
         }

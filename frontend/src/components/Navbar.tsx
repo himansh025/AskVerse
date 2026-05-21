@@ -14,6 +14,7 @@ import {
   Tags,
   UserRound,
   X,
+  Settings,
 } from 'lucide-react';
 import { getApiErrorMessage, getApiSuccessMessage, showErrorToast, showSuccessToast } from '../utils/notify.ts';
 
@@ -56,6 +57,7 @@ export default function Navbar() {
       { to: '/ask', label: 'Ask', icon: CircleHelp },
       { to: '/tags', label: 'Tags', icon: Tags },
       { to: '/profile', label: 'Profile', icon: UserRound },
+      ...(user.role === 'ADMIN' ? [{ to: '/admin', label: 'Admin', icon: Settings }] : []),
     ] : []),
   ];
 

@@ -29,13 +29,13 @@ public class Subscription {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_id", nullable = false)
+    @JoinColumn(name = "creator_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private User creator;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subscriber_id", nullable = false)
+    @JoinColumn(name = "subscriber_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private User subscriber;

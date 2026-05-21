@@ -143,6 +143,9 @@ public class UserService {
                 .monthlySubscriptionIncome(subscriptionService.calculateMonthlySubscriptionIncome(user))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
+                .role(user.getRole())
+                .questionsCount(questionRepository.countByUserId(user.getId()))
+                .followedTagsCount((long) (user.getFollowedTags() != null ? user.getFollowedTags().size() : 0))
                 .build();
     }
 

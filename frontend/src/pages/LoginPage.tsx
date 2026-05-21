@@ -91,6 +91,7 @@ export default function LoginPage() {
               placeholder="you@example.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
             />
           </div>
           <div>
@@ -100,6 +101,7 @@ export default function LoginPage() {
               placeholder="Enter your password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
             />
           </div>
 
