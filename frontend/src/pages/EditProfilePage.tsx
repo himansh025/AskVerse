@@ -30,6 +30,7 @@ export default function EditProfilePage() {
     dob: '',
     premiumCreatorEnabled: false,
     subscriptionPrice: '9.99',
+    razorpayPaymentDetails: '',
   });
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function EditProfilePage() {
       dob: profileData.dob || '',
       premiumCreatorEnabled: Boolean(profileData.premiumCreatorEnabled),
       subscriptionPrice: String(profileData.subscriptionPrice || '9.99'),
+      razorpayPaymentDetails: profileData.razorpayPaymentDetails || '',
     });
 
     setProfilePreview(
@@ -153,6 +155,7 @@ export default function EditProfilePage() {
       payload.append('premiumCreatorEnabled', String(formData.premiumCreatorEnabled));
       payload.append('subscriptionPrice', formData.subscriptionPrice);
       payload.append('subscriptionCurrency', 'INR');
+      payload.append('razorpayPaymentDetails', formData.razorpayPaymentDetails);
       if (selectedProfileImage) {
         payload.append('profileImage', selectedProfileImage);
       }
@@ -459,6 +462,27 @@ export default function EditProfilePage() {
                       {subscriptionCurrencyLabel}
                     </div>
                   </div>
+
+                  {formData.premiumCreatorEnabled && (
+                    <div className="md:col-span-2 mt-4 pt-4 border-t border-amber-200/60">
+                      <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                        <IndianRupee size={18} className="text-[#07528f]" />
+                        Razorpay Payout UPI ID (VPA) / Account ID
+                      </label>
+                      <input
+                        type="text"
+                        name="razorpayPaymentDetails"
+                        value={formData.razorpayPaymentDetails}
+                        onChange={handleChange}
+                        className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-[#07528f]"
+                        placeholder="e.g. user@okaxis or acc_xxxxx"
+                        required={formData.premiumCreatorEnabled}
+                      />
+                      <p className="mt-1.5 text-xs text-amber-700/80">
+                        Required to receive subscription payouts from the administrator.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

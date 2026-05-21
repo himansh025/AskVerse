@@ -9,14 +9,23 @@ import com.example.Quora.repository.QuestionRepository;
 import com.example.Quora.repository.TagRepository;
 import com.example.Quora.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 public class AdminService {
@@ -38,6 +47,16 @@ public class AdminService {
     
     @Autowired
     private UserService userService;
+
+    @Value("${razorpay.key-id:}")
+    private String razorpayKeyId;
+
+    @Value("${razorpay.key-secret:}")
+    private String razorpayKeySecret;
+
+    private static final String RAZORPAY_ORDER_API = "https://api.razorpay.com/v1/orders";
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -144,6 +163,88 @@ public class AdminService {
                 question.getTags().remove(tag);
             }
             tagRepository.deleteById(id);
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> payoutUser(Long id, BigDecimal amount) {
+        com.example.Quora.models.User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (user.getPaymentCredential() == null || user.getPaymentCredential().getRazorpayPaymentDetails() == null || user.getPaymentCredential().getRazorpayPaymentDetails().isBlank()) {
+            throw new IllegalArgumentException("User has not set up Razorpay payment credentials");
+        }
+
+        String paymentReference = "payout_" + java.util.UUID.randomUUID().toString().replace("-", "");
+        String orderId = createRazorpayOrder(amount, "INR", paymentReference);
+
+        com.example.Quora.models.User admin = userRepository.findAll().stream()
+                .filter(u -> "ADMIN".equalsIgnoreCase(u.getRole()))
+                .findFirst()
+                .orElse(user);
+
+        PaymentTransaction transaction = new PaymentTransaction();
+        transaction.setCreator(user);
+        transaction.setSubscriber(admin);
+        transaction.setAmount(amount);
+        transaction.setCurrency("INR");
+        transaction.setGateway(com.example.Quora.models.PaymentGateway.RAZORPAY);
+        transaction.setPaymentReference(paymentReference);
+        transaction.setPaymentGatewayOrderId(orderId);
+        transaction.setStatus(com.example.Quora.models.PaymentStatus.PENDING);
+        
+        paymentTransactionRepository.save(transaction);
+
+        Map<String, Object> orderDetails = new HashMap<>();
+        orderDetails.put("orderId", orderId);
+        orderDetails.put("amount", amount);
+        orderDetails.put("currency", "INR");
+        orderDetails.put("key", razorpayKeyId);
+        orderDetails.put("paymentReference", paymentReference);
+        return orderDetails;
+    }
+
+    @Transactional
+    public void confirmPayout(String paymentReference, String externalPaymentId, String paymentSignature) {
+        PaymentTransaction transaction = paymentTransactionRepository.findByPaymentReference(paymentReference)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+        
+        transaction.setExternalPaymentId(externalPaymentId);
+        transaction.setStatus(com.example.Quora.models.PaymentStatus.PAID);
+        paymentTransactionRepository.save(transaction);
+    }
+
+    private String createRazorpayOrder(BigDecimal amount, String currency, String receipt) {
+        if (razorpayKeyId == null || razorpayKeyId.isBlank() || razorpayKeySecret == null || razorpayKeySecret.isBlank()) {
+            throw new IllegalStateException("Razorpay credentials are not configured");
+        }
+        long amountInPaise = amount.multiply(BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.HALF_UP).longValueExact();
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(Map.of(
+                    "amount", amountInPaise,
+                    "currency", currency,
+                    "receipt", receipt,
+                    "payment_capture", 1));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(RAZORPAY_ORDER_API))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(
+                            (razorpayKeyId + ":" + razorpayKeySecret).getBytes(StandardCharsets.UTF_8)))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200 && response.statusCode() != 201) {
+                throw new IllegalStateException("Failed to create Razorpay order: " + response.body());
+            }
+
+            JsonNode responseBody = objectMapper.readTree(response.body());
+            return responseBody.path("id").asText();
+        } catch (java.io.IOException | InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Unable to create Razorpay order", ex);
         }
     }
 }

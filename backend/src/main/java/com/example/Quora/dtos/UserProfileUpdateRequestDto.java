@@ -15,6 +15,7 @@ public class UserProfileUpdateRequestDto {
     private Boolean premiumCreatorEnabled;
     private String subscriptionPrice;
     private String subscriptionCurrency;
+    private String razorpayPaymentDetails;
     private MultipartFile profileImage;
     private MultipartFile coverImage;
 }

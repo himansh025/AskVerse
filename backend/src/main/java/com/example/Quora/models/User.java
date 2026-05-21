@@ -79,4 +79,9 @@ public class User {
     @EqualsAndHashCode.Exclude
     private Set<Tag> followedTags = new HashSet<>();
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private UserPaymentCredential paymentCredential;
 }

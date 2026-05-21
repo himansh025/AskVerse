@@ -9,6 +9,7 @@ import com.example.Quora.dtos.AnswerResponseDto;
 import com.example.Quora.dtos.CommentResponseDto;
 import com.example.Quora.models.Tag;
 import com.example.Quora.models.User;
+import com.example.Quora.models.UserPaymentCredential;
 import com.example.Quora.repository.TagRepository;
 import com.example.Quora.repository.UserRepository;
 import com.example.Quora.repository.QuestionRepository;
@@ -141,11 +142,13 @@ public class UserService {
                 .subscriptionCurrency(subscriptionService.resolveSubscriptionCurrency(user))
                 .activeSubscriberCount(subscriptionService.countActiveSubscribers(user.getId()))
                 .monthlySubscriptionIncome(subscriptionService.calculateMonthlySubscriptionIncome(user))
+                .pendingPayoutBalance(subscriptionService.calculatePendingPayoutBalance(user))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .role(user.getRole())
                 .questionsCount(questionRepository.countByUserId(user.getId()))
                 .followedTagsCount((long) (user.getFollowedTags() != null ? user.getFollowedTags().size() : 0))
+                .razorpayPaymentDetails(user.getPaymentCredential() != null ? user.getPaymentCredential().getRazorpayPaymentDetails() : null)
                 .build();
     }
 
@@ -196,6 +199,7 @@ public class UserService {
                 .subscriptionCurrency(subscriptionService.resolveSubscriptionCurrency(user))
                 .activeSubscriberCount(subscriptionService.countActiveSubscribers(userId))
                 .monthlySubscriptionIncome(subscriptionService.calculateMonthlySubscriptionIncome(user))
+                .pendingPayoutBalance(subscriptionService.calculatePendingPayoutBalance(user))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .questions(questions)
@@ -206,6 +210,7 @@ public class UserService {
                 .commentsCount((long) comments.size())
                 .followedTags(followedTags)
                 .createdTags(null) // TODO: implement if needed
+                .razorpayPaymentDetails(user.getPaymentCredential() != null ? user.getPaymentCredential().getRazorpayPaymentDetails() : null)
                 .build();
     }
 
@@ -237,6 +242,16 @@ public class UserService {
         if (profileDto.getSubscriptionCurrency() != null)
             user.setSubscriptionCurrency(profileDto.getSubscriptionCurrency());
 
+        if (profileDto.getRazorpayPaymentDetails() != null) {
+            UserPaymentCredential cred = user.getPaymentCredential();
+            if (cred == null) {
+                cred = new UserPaymentCredential();
+                cred.setUser(user);
+            }
+            cred.setRazorpayPaymentDetails(profileDto.getRazorpayPaymentDetails());
+            user.setPaymentCredential(cred);
+        }
+
         return userRepository.save(user);
     }
 
@@ -264,6 +279,15 @@ public class UserService {
             user.setSubscriptionPrice(new BigDecimal(profileDto.getSubscriptionPrice()));
         if (profileDto.getSubscriptionCurrency() != null && !profileDto.getSubscriptionCurrency().isBlank())
             user.setSubscriptionCurrency(profileDto.getSubscriptionCurrency().trim().toUpperCase());
+        if (profileDto.getRazorpayPaymentDetails() != null) {
+            UserPaymentCredential cred = user.getPaymentCredential();
+            if (cred == null) {
+                cred = new UserPaymentCredential();
+                cred.setUser(user);
+            }
+            cred.setRazorpayPaymentDetails(profileDto.getRazorpayPaymentDetails());
+            user.setPaymentCredential(cred);
+        }
         if (profileDto.getProfileImage() != null && !profileDto.getProfileImage().isEmpty())
             user.setProfilePicture(cloudinaryService.uploadProfileImage(profileDto.getProfileImage()));
         if (profileDto.getCoverImage() != null && !profileDto.getCoverImage().isEmpty())

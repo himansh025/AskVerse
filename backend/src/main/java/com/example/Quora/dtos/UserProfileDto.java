@@ -50,6 +50,8 @@ public class UserProfileDto {
 
     private BigDecimal monthlySubscriptionIncome;
 
+    private BigDecimal pendingPayoutBalance;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -73,6 +75,8 @@ public class UserProfileDto {
     private List<Tag> followedTags;
 
     private List<Tag> createdTags;
+
+    private String razorpayPaymentDetails;
 
     // private Long likesCount;
 

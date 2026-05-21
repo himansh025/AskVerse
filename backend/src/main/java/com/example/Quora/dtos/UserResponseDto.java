@@ -30,10 +30,12 @@ public class UserResponseDto {
     private String subscriptionCurrency;
     private Long activeSubscriberCount;
     private BigDecimal monthlySubscriptionIncome;
+    private BigDecimal pendingPayoutBalance;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String token;
     private String role;
     private Long questionsCount;
     private Long followedTagsCount;
+    private String razorpayPaymentDetails;
 }

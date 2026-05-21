@@ -57,4 +57,24 @@ public class AdminController {
         adminService.deleteTag(id);
         return ResponseEntity.ok(ApiResponse.success("Tag deleted", null));
     }
+
+    @PostMapping("/users/{id}/payout")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> payoutUser(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Object> payload) {
+        java.math.BigDecimal amount = new java.math.BigDecimal(payload.get("amount").toString());
+        Map<String, Object> orderDetails = adminService.payoutUser(id, amount);
+        return ResponseEntity.ok(ApiResponse.success("Payout order created", orderDetails));
+    }
+
+    @PostMapping("/payout/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirmPayout(
+            @RequestBody Map<String, String> payload) {
+        adminService.confirmPayout(
+            payload.get("paymentReference"),
+            payload.get("externalPaymentId"),
+            payload.get("paymentSignature")
+        );
+        return ResponseEntity.ok(ApiResponse.success("Payout confirmed and recorded", null));
+    }
 }

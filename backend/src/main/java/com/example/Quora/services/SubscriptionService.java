@@ -38,6 +38,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Locale;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -105,7 +107,7 @@ public class SubscriptionService {
                 .subscriptionPrice(resolveSubscriptionPrice(creator))
                 .subscriptionCurrency(resolveSubscriptionCurrency(creator))
                 .activeSubscriberCount(activeSubscriberCount)
-                .monthlySubscriptionIncome(calculateMonthlySubscriptionIncome(creator, activeSubscriberCount))
+                .monthlySubscriptionIncome(calculateMonthlySubscriptionIncome(creator))
                 .subscribedByViewer(hasActiveSubscription(viewerId, creatorId))
                 .build();
     }
@@ -287,13 +289,41 @@ public class SubscriptionService {
 
     @Transactional(readOnly = true)
     public BigDecimal calculateMonthlySubscriptionIncome(User creator) {
-        return calculateMonthlySubscriptionIncome(creator, countActiveSubscribers(creator.getId()));
-    }
-
-    private BigDecimal calculateMonthlySubscriptionIncome(User creator, long activeSubscriberCount) {
+        if (creator == null || creator.getId() == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        long activeSubscriberCount = countActiveSubscribers(creator.getId());
         return resolveSubscriptionPrice(creator)
                 .multiply(BigDecimal.valueOf(activeSubscriberCount))
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal calculatePendingPayoutBalance(User creator) {
+        if (creator == null || creator.getId() == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        List<PaymentTransaction> txs = paymentTransactionRepository.findAll().stream()
+                .filter(t -> t.getCreator() != null && t.getCreator().getId().equals(creator.getId()) && t.getStatus() == PaymentStatus.PAID)
+                .collect(Collectors.toList());
+
+        BigDecimal totalEarned = txs.stream()
+                .filter(t -> t.getSubscription() != null)
+                .map(PaymentTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalPaidOut = txs.stream()
+                .filter(t -> t.getSubscription() == null)
+                .map(PaymentTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal pending = totalEarned.subtract(totalPaidOut);
+        if (pending.compareTo(BigDecimal.ZERO) < 0) {
+            pending = BigDecimal.ZERO;
+        }
+
+        return pending.setScale(2, RoundingMode.HALF_UP);
     }
 
     public BigDecimal resolveSubscriptionPrice(User creator) {
